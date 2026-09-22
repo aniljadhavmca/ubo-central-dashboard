@@ -253,9 +253,25 @@
             var hint = origQty !== null ? 'Current: ' + origQty + ' units' : 'No stock tracking set';
             $('#ubo-qty-hint').text( hint );
 
-            toggleReasonField();
+            if ( data.noSku ) {
+                // Show red banner, blur + disable all fields, hide Save
+                $('#ubo-modal-notice')
+                    .attr('class', 'ubo-notice ubo-notice-error')
+                    .html('⚠️ No SKU assigned to this product. Please add a SKU in WooCommerce before editing.')
+                    .show();
+                $('.ubo-modal-fields input, .ubo-modal-fields select, .ubo-modal-fields textarea')
+                    .prop('disabled', true);
+                $('.ubo-modal').addClass('ubo-modal-locked');
+                $saveBtn.hide();
+            } else {
+                $('.ubo-modal-fields input, .ubo-modal-fields select, .ubo-modal-fields textarea')
+                    .prop('disabled', false);
+                $('.ubo-modal').removeClass('ubo-modal-locked');
+                $saveBtn.show();
+                toggleReasonField();
+            }
+
             $overlay.fadeIn( 150 );
-            $('#ubo-edit-price').focus();
         }
 
         function closeModal() {
@@ -276,19 +292,6 @@
         // Open on Edit button click
         $(document).on('click', '.ubo-edit-btn', function() {
             var sku = $(this).data('sku');
-            if ( ! sku || sku === '' ) {
-                // Show inline notice on the button row instead of opening modal
-                var $btn  = $(this);
-                var orig  = $btn.text();
-                $btn.text('No SKU').prop('disabled', true).addClass('ubo-btn-no-sku');
-                var $msg = $('<span class="ubo-no-sku-msg">SKU not set — add a SKU in WooCommerce before editing</span>');
-                $btn.after( $msg );
-                setTimeout( function() {
-                    $btn.text( orig ).prop('disabled', false).removeClass('ubo-btn-no-sku');
-                    $msg.remove();
-                }, 3000 );
-                return;
-            }
             openModal({
                 id:     $(this).data('id'),
                 type:   $(this).data('type'),
@@ -299,6 +302,7 @@
                 price:  $(this).data('price'),
                 sale:   $(this).data('sale'),
                 qty:    $(this).data('qty'),
+                noSku:  ! sku || sku === '',
             });
         });
 

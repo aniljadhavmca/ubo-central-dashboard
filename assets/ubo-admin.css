@@ -478,6 +478,22 @@
 }
 @keyframes ubo-fadein { from { opacity:0; transform:translateY(-2px); } to { opacity:1; transform:translateY(0); } }
 
+/* Locked modal state (no SKU) */
+.ubo-modal-locked .ubo-modal-fields {
+    opacity: .45;
+    filter: blur(1.5px);
+    pointer-events: none;
+    user-select: none;
+}
+.ubo-modal-locked .ubo-modal-footer {
+    background: #f8fafc;
+    justify-content: center;
+}
+.ubo-modal-locked .ubo-modal-footer .ubo-btn-secondary {
+    width: 100%;
+    justify-content: center;
+}
+
 /* Responsive */
 @media (max-width: 1100px) {
     .ubo-stat-grid { grid-template-columns: repeat(2, 1fr); }
