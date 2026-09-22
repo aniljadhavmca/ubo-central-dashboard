@@ -19,6 +19,7 @@ if ( isset( $_POST['ubo_settings_nonce'] ) && wp_verify_nonce( $_POST['ubo_setti
             <tr><th>Site URL</th><td><input class="regular-text" type="text" name="ubo_us_url" value="<?php echo esc_attr( get_option('ubo_us_url') ); ?>" placeholder="https://us.unitedbyom.com" /></td></tr>
             <tr><th>Consumer Key</th><td><input class="regular-text" type="text" name="ubo_us_ck" value="<?php echo esc_attr( get_option('ubo_us_ck') ); ?>" placeholder="ck_..." /></td></tr>
             <tr><th>Consumer Secret</th><td><input class="regular-text" type="password" name="ubo_us_cs" value="<?php echo esc_attr( get_option('ubo_us_cs') ); ?>" placeholder="cs_..." /></td></tr>
+            <tr><th>Webhook Secret</th><td><input class="regular-text" type="password" name="ubo_us_webhook_secret" value="<?php echo esc_attr( get_option('ubo_us_webhook_secret') ); ?>" placeholder="Webhook secret from WooCommerce" /><p class="description">Webhook URL: <code><?php echo esc_url( rest_url('ubo/v1/webhook/US') ); ?></code></p></td></tr>
         </table>
 
         <h2>India Site — in.unitedbyom.com</h2>
@@ -26,6 +27,7 @@ if ( isset( $_POST['ubo_settings_nonce'] ) && wp_verify_nonce( $_POST['ubo_setti
             <tr><th>Site URL</th><td><input class="regular-text" type="text" name="ubo_in_url" value="<?php echo esc_attr( get_option('ubo_in_url') ); ?>" placeholder="https://in.unitedbyom.com" /></td></tr>
             <tr><th>Consumer Key</th><td><input class="regular-text" type="text" name="ubo_in_ck" value="<?php echo esc_attr( get_option('ubo_in_ck') ); ?>" placeholder="ck_..." /></td></tr>
             <tr><th>Consumer Secret</th><td><input class="regular-text" type="password" name="ubo_in_cs" value="<?php echo esc_attr( get_option('ubo_in_cs') ); ?>" placeholder="cs_..." /></td></tr>
+            <tr><th>Webhook Secret</th><td><input class="regular-text" type="password" name="ubo_in_webhook_secret" value="<?php echo esc_attr( get_option('ubo_in_webhook_secret') ); ?>" placeholder="Webhook secret from WooCommerce" /><p class="description">Webhook URL: <code><?php echo esc_url( rest_url('ubo/v1/webhook/India') ); ?></code></p></td></tr>
         </table>
 
         <?php submit_button( 'Save Settings' ); ?>

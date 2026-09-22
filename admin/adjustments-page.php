@@ -13,6 +13,7 @@ $reasons = [
     'return'        => 'Return',
     'correction'    => 'Stock Correction',
     'transfer'      => 'Stock Transfer',
+    'order'         => 'Auto — Order Placed',
 ];
 ?>
 <style>

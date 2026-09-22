@@ -15,13 +15,18 @@ require_once UBO_PLUGIN_DIR . 'includes/class-api-client.php';
 require_once UBO_PLUGIN_DIR . 'includes/class-orders.php';
 require_once UBO_PLUGIN_DIR . 'includes/class-inventory.php';
 require_once UBO_PLUGIN_DIR . 'includes/class-adjustments.php';
+require_once UBO_PLUGIN_DIR . 'includes/class-reserved.php';
+require_once UBO_PLUGIN_DIR . 'includes/class-webhook.php';
+
+UBO_Webhook::register();
 
 register_activation_hook( __FILE__, 'ubo_create_tables' );
 function ubo_create_tables() {
     global $wpdb;
-    $table   = $wpdb->prefix . 'ubo_stock_adjustments';
     $charset = $wpdb->get_charset_collate();
-    $sql = "CREATE TABLE IF NOT EXISTS {$table} (
+    require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
+    dbDelta( "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}ubo_stock_adjustments (
         id bigint(20) NOT NULL AUTO_INCREMENT,
         sku varchar(100) NOT NULL,
         site varchar(10) NOT NULL,
@@ -31,9 +36,16 @@ function ubo_create_tables() {
         user_id bigint(20) NOT NULL,
         created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (id)
-    ) {$charset};";
-    require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-    dbDelta( $sql );
+    ) {$charset};" );
+
+    dbDelta( "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}ubo_reserved_stock (
+        id bigint(20) NOT NULL AUTO_INCREMENT,
+        sku varchar(100) NOT NULL,
+        site varchar(10) NOT NULL,
+        reserved int(11) NOT NULL DEFAULT 0,
+        PRIMARY KEY (id),
+        UNIQUE KEY sku_site (sku, site)
+    ) {$charset};" );
 }
 
 add_action( 'admin_menu', 'ubo_register_menus' );
@@ -58,7 +70,7 @@ function ubo_settings_page()     { require_once UBO_PLUGIN_DIR . 'admin/settings
 
 add_action( 'admin_init', 'ubo_register_settings' );
 function ubo_register_settings() {
-    $fields = [ 'ubo_us_url', 'ubo_us_ck', 'ubo_us_cs', 'ubo_in_url', 'ubo_in_ck', 'ubo_in_cs', 'ubo_low_stock_threshold' ];
+    $fields = [ 'ubo_us_url', 'ubo_us_ck', 'ubo_us_cs', 'ubo_us_webhook_secret', 'ubo_in_url', 'ubo_in_ck', 'ubo_in_cs', 'ubo_in_webhook_secret', 'ubo_low_stock_threshold' ];
     foreach ( $fields as $field ) {
         register_setting( 'ubo_settings_group', $field, [ 'sanitize_callback' => 'sanitize_text_field' ] );
     }
