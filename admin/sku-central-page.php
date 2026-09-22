@@ -5,15 +5,29 @@ if ( ! current_user_can( 'manage_options' ) ) return;
 $saved = UBO_Reserved::handle_form();
 
 $search       = sanitize_text_field( $_GET['search'] ?? '' );
+$sku_exact    = sanitize_text_field( $_GET['sku']    ?? '' );
 $filter_color = sanitize_text_field( $_GET['color'] ?? '' );
 $filter_size  = sanitize_text_field( $_GET['size'] ?? '' );
 $filter_type  = sanitize_text_field( $_GET['garment_type'] ?? '' );
 
-$params = [ 'per_page' => 100 ];
-if ( $search ) $params['search'] = $search;
+$sku_exact = sanitize_text_field( $_GET['sku'] ?? '' );
 
-$us_products  = UBO_Inventory::fetch( 'US', $params );
-$in_products  = UBO_Inventory::fetch( 'India', $params );
+// Fetch by name search AND by exact SKU param, merge to catch both cases
+function ubo_fetch_merged( $site_key, $search, $sku_exact ) {
+    $by_name = $search    ? UBO_Inventory::fetch( $site_key, [ 'search' => $search,    'per_page' => 100 ] ) : [];
+    $by_sku  = $sku_exact ? UBO_Inventory::fetch( $site_key, [ 'sku'    => $sku_exact, 'per_page' => 100 ] ) : [];
+    if ( ! $search && ! $sku_exact ) return UBO_Inventory::fetch( $site_key, [ 'per_page' => 100 ] );
+    $merged = [];
+    foreach ( [ $by_name, $by_sku ] as $batch ) {
+        if ( is_array( $batch ) && ! isset( $batch['error'] ) ) {
+            foreach ( $batch as $p ) $merged[ $p['id'] ] = $p;
+        }
+    }
+    return array_values( $merged );
+}
+
+$us_products  = ubo_fetch_merged( 'US',    $search, $sku_exact );
+$in_products  = ubo_fetch_merged( 'India', $search, $sku_exact );
 $reserved_map = UBO_Reserved::get_all();
 
 function ubo_build_sku_index( $products ) {
@@ -74,7 +88,7 @@ if ( $filter_color || $filter_size || $filter_type ) {
 }
 
 $threshold = (int) get_option( 'ubo_low_stock_threshold', UBO_LOW_STOCK_THRESHOLD );
-$has_filters = $search || $filter_color || $filter_size || $filter_type;
+$has_filters = $search || $sku_exact || $filter_color || $filter_size || $filter_type;
 ?>
 <div class="ubo-wrap">
 
@@ -91,12 +105,13 @@ $has_filters = $search || $filter_color || $filter_size || $filter_type;
 
     <form method="get" id="ubo-sku-form">
         <input type="hidden" name="page" value="ubo-sku" />
+        <input type="hidden" id="ubo-sku-exact" name="sku" value="<?php echo esc_attr( $sku_exact ); ?>" />
         <div class="ubo-filter-bar">
 
             <div class="ubo-search-wrap">
                 <span class="ubo-search-icon">🔍</span>
                 <input type="search" id="ubo-live-search" name="search"
-                    value="<?php echo esc_attr( $search ); ?>"
+                    value="<?php echo esc_attr( $search ?: $sku_exact ); ?>"
                     placeholder="Search by name or SKU…"
                     autocomplete="off" />
                 <div id="ubo-search-suggestions" class="ubo-search-suggestions"></div>

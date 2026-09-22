@@ -17,9 +17,8 @@
 
         function doSearch( val ) {
             if ( val.length < ( opts.minChars || 1 ) ) { hide(); return; }
-            if ( val === lastVal ) return;
-            lastVal = val;
             showLoading();
+            lastVal = val;
 
             var data = {
                 action: 'ubo_search_skus',
@@ -42,7 +41,7 @@
                     }
                     var html = '';
                     $.each( res.data, function( i, item ) {
-                        html += '<div class="ubo-suggestion-item" data-value="' + $('<div>').text( item.sku ).html() + '">' +
+                        html += '<div class="ubo-suggestion-item" data-sku="' + $('<div>').text( item.sku ).html() + '" data-name="' + $('<div>').text( item.name ).html() + '">' +
                             '<span class="ubo-sug-name">'  + $('<div>').text( item.name ).html() + '</span>' +
                             '<span class="ubo-sug-sku">'   + $('<div>').text( item.sku  ).html() + '</span>' +
                             '</div>';
@@ -57,31 +56,28 @@
             var val = $(this).val().trim();
             clearTimeout( timer );
             if ( val.length < ( opts.minChars || 1 ) ) { hide(); lastVal = ''; return; }
+            // Always fire — don't skip if same value (user may have cleared and retyped)
             timer = setTimeout( function() { doSearch( val ); }, opts.debounce || 280 );
         });
 
-        $(document).on('click', '.ubo-suggestion-item', function() {
-            var $item = $(this);
-            // Only handle if inside the right suggestions container
-            if ( ! $item.closest( $suggestions.parent() ).length && $suggestions.parent()[0] !== $item.closest('.ubo-search-wrap')[0] ) {
-                // fallback: check closest suggestions div
-            }
-            if ( $item.closest('#' + $suggestions.attr('id') ).length || $suggestions.find( $item[0] ).length || $item.parent()[0] === $suggestions[0] ) {
-                $input.val( $item.data('value') );
-                hide();
-                if ( opts.onSelect ) opts.onSelect( $item.data('value') );
-            }
+        // Scoped click: only fire for suggestions inside THIS suggestions container
+        $suggestions.on('click', '.ubo-suggestion-item', function() {
+            var sku  = $(this).data('sku');
+            var name = $(this).data('name');
+            $input.val( sku );
+            lastVal = '';
+            hide();
+            if ( opts.onSelect ) opts.onSelect( sku, name );
         });
 
         $(document).on('click', function(e) {
-            if ( ! $(e.target).closest('.ubo-search-wrap').length ) hide();
+            if ( ! $(e.target).closest( $suggestions.closest('.ubo-search-wrap') ).length ) hide();
         });
 
         $input.on('keydown', function(e) {
             if ( e.key === 'Enter' ) { hide(); }
         });
 
-        // expose reset
         return { hide: hide, resetLast: function() { lastVal = ''; } };
     }
 
@@ -89,17 +85,33 @@
     function initSkuCentralSearch() {
         var $input       = $('#ubo-live-search');
         var $suggestions = $('#ubo-search-suggestions');
+        var $skuExact    = $('#ubo-sku-exact');
         var $form        = $input.closest('form');
         if ( ! $input.length ) return;
 
-        var search = buildLiveSearch( $input, $suggestions, {
+        buildLiveSearch( $input, $suggestions, {
             minChars: 1,
-            debounce: 280,
-            onSelect: function() { $form.submit(); }
+            debounce: 300,
+            onSelect: function( sku ) {
+                // Put the SKU in the hidden exact-match field, clear name search
+                $skuExact.val( sku );
+                $input.val( sku );   // keep visible so user sees what they picked
+                $form.submit();
+            }
         });
 
+        // On manual Enter: treat typed value as name search, clear sku exact
         $input.on('keydown', function(e) {
-            if ( e.key === 'Enter' ) { search.hide(); $form.submit(); }
+            if ( e.key === 'Enter' ) {
+                $skuExact.val('');
+                $suggestions.removeClass('active').empty();
+                $form.submit();
+            }
+        });
+
+        // When user types, clear the hidden sku exact so it doesn't override
+        $input.on('input', function() {
+            $skuExact.val('');
         });
     }
 
