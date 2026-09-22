@@ -3,6 +3,9 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 if ( ! current_user_can( 'manage_options' ) ) return;
 
 UBO_Adjustments::handle_form();
+$adj_error = UBO_Adjustments::$last_error;
+$adj_saved = empty( $adj_error ) && isset( $_POST['ubo_adj_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ubo_adj_nonce'] ) ), 'ubo_adjustment' );
+
 $log = UBO_Adjustments::get_log( 200 );
 
 $reasons = [
@@ -19,6 +22,9 @@ $reasons_plain = [
     'sample' => 'Sample', 'return' => 'Return', 'correction' => 'Stock Correction',
     'transfer' => 'Stock Transfer', 'order' => 'Auto — Order Placed',
 ];
+
+$posted_sku  = sanitize_text_field( wp_unslash( $_POST['sku'] ?? '' ) );
+$posted_site = sanitize_text_field( wp_unslash( $_POST['site'] ?? 'US' ) );
 ?>
 <div class="ubo-wrap">
 
@@ -29,25 +35,38 @@ $reasons_plain = [
         </div>
     </div>
 
-    <div style="display:grid;grid-template-columns:400px 1fr;gap:24px;align-items:start;">
+    <?php if ( $adj_error ) : ?>
+        <div class="ubo-notice ubo-notice-error">❌ <?php echo wp_kses_post( $adj_error ); ?></div>
+    <?php elseif ( $adj_saved ) : ?>
+        <div class="ubo-notice ubo-notice-success">✅ Adjustment saved successfully.</div>
+    <?php endif; ?>
+
+    <div style="display:grid;grid-template-columns:420px 1fr;gap:24px;align-items:start;">
 
         <div class="ubo-form-card">
             <h2>New Adjustment</h2>
-            <form method="post">
+            <form method="post" id="ubo-adj-form">
                 <?php wp_nonce_field( 'ubo_adjustment', 'ubo_adj_nonce' ); ?>
 
                 <div class="ubo-field">
-                    <label>SKU <span style="color:#ef4444;">*</span></label>
-                    <input type="text" name="sku" required placeholder="e.g. UBOM-LW-BLK-M" />
-                    <div class="ubo-hint">Enter the exact product SKU</div>
+                    <label>Store <span style="color:#ef4444;">*</span></label>
+                    <select name="site" id="ubo-adj-site" required>
+                        <option value="US"    <?php selected( $posted_site, 'US' ); ?>>🇺🇸 US Store</option>
+                        <option value="India" <?php selected( $posted_site, 'India' ); ?>>🇮🇳 India Store</option>
+                    </select>
                 </div>
 
                 <div class="ubo-field">
-                    <label>Store <span style="color:#ef4444;">*</span></label>
-                    <select name="site" required>
-                        <option value="US">🇺🇸 US Store</option>
-                        <option value="India">🇮🇳 India Store</option>
-                    </select>
+                    <label>SKU <span style="color:#ef4444;">*</span></label>
+                    <div class="ubo-search-wrap" style="position:relative;">
+                        <span class="ubo-search-icon">🔍</span>
+                        <input type="text" name="sku" id="ubo-adj-sku" required
+                            value="<?php echo esc_attr( $posted_sku ); ?>"
+                            placeholder="Type to search SKU…"
+                            autocomplete="off" />
+                        <div id="ubo-adj-suggestions" class="ubo-search-suggestions"></div>
+                    </div>
+                    <div id="ubo-sku-validation" class="ubo-sku-validation"></div>
                 </div>
 
                 <div class="ubo-field">
@@ -71,7 +90,7 @@ $reasons_plain = [
                     <textarea name="note" placeholder="Add any extra details about this adjustment…"></textarea>
                 </div>
 
-                <button type="submit" class="ubo-btn ubo-btn-primary" style="width:100%;justify-content:center;">Save Adjustment</button>
+                <button type="submit" id="ubo-adj-submit" class="ubo-btn ubo-btn-primary" style="width:100%;justify-content:center;">Save Adjustment</button>
             </form>
         </div>
 

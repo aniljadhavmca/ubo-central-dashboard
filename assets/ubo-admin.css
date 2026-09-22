@@ -399,6 +399,44 @@
 .adj-pos { color: #16a34a; font-weight: 700; }
 .adj-neg { color: #dc2626; font-weight: 700; }
 
+/* SKU validation states */
+.ubo-sku-validation { margin-top: 5px; font-size: 12px; min-height: 18px; }
+.ubo-sku-valid    { color: #16a34a; display: flex; align-items: center; gap: 4px; }
+.ubo-sku-invalid  { color: #dc2626; display: flex; align-items: center; gap: 4px; }
+.ubo-sku-checking { color: #94a3b8; display: flex; align-items: center; gap: 5px; }
+
+/* Adjustments SKU search wrap inside form card */
+.ubo-form-card .ubo-search-wrap {
+    position: relative;
+}
+.ubo-form-card .ubo-search-wrap input {
+    padding-left: 32px;
+}
+.ubo-form-card .ubo-search-wrap .ubo-search-icon {
+    position: absolute;
+    left: 9px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 14px;
+    pointer-events: none;
+}
+.ubo-form-card .ubo-search-suggestions {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.1);
+    z-index: 999;
+    max-height: 260px;
+    overflow-y: auto;
+    display: none;
+}
+.ubo-form-card .ubo-search-suggestions.active { display: block; }
+
 /* SKU code */
 .ubo-sku-code {
     font-family: 'SFMono-Regular', Consolas, monospace;

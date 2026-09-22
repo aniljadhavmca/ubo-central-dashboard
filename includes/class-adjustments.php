@@ -3,6 +3,8 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 class UBO_Adjustments {
 
+    public static $last_error = '';
+
     private static function table() {
         global $wpdb;
         return $wpdb->prefix . 'ubo_stock_adjustments';
@@ -56,18 +58,47 @@ class UBO_Adjustments {
         if ( ! $s || empty( $s['url'] ) ) return;
 
         $client   = new UBO_API_Client( $s['url'], $s['ck'], $s['cs'] );
-        $products = $client->get( 'products', [ 'sku' => $sku ] );
+        $products = $client->get( 'products', [ 'sku' => $sku, 'per_page' => 5 ] );
 
-        if ( ! empty( $products ) && is_array( $products ) && ! isset( $products['error'] ) ) {
-            $product     = $products[0];
-            $current_qty = (int) ( $product['stock_quantity'] ?? 0 );
-            $new_qty     = max( 0, $current_qty + $adjustment );
-
-            $client->put( 'products/' . (int) $product['id'], [
-                'stock_quantity' => $new_qty,
-                'manage_stock'   => true,
-            ] );
+        if ( empty( $products ) || ! is_array( $products ) || isset( $products['error'] ) ) {
+            // SKU not found on this site — set error and bail
+            self::$last_error = 'SKU &ldquo;' . esc_html( $sku ) . '&rdquo; was not found on the ' . esc_html( $site ) . ' store. Please check the SKU and selected store.';
+            return;
         }
+
+        // Resolve exact product/variation match
+        $target_id   = null;
+        $current_qty = 0;
+        $endpoint    = '';
+        foreach ( $products as $p ) {
+            if ( $p['sku'] === $sku ) {
+                $target_id   = (int) $p['id'];
+                $current_qty = (int) ( $p['stock_quantity'] ?? 0 );
+                $endpoint    = 'products/' . $target_id;
+                break;
+            }
+            if ( $p['type'] === 'variable' ) {
+                $vars = $client->get( 'products/' . (int) $p['id'] . '/variations', [ 'per_page' => 100 ] );
+                if ( is_array( $vars ) ) {
+                    foreach ( $vars as $v ) {
+                        if ( $v['sku'] === $sku ) {
+                            $target_id   = (int) $v['id'];
+                            $current_qty = (int) ( $v['stock_quantity'] ?? 0 );
+                            $endpoint    = 'products/' . (int) $p['id'] . '/variations/' . $target_id;
+                            break 2;
+                        }
+                    }
+                }
+            }
+        }
+
+        if ( ! $target_id ) {
+            self::$last_error = 'SKU &ldquo;' . esc_html( $sku ) . '&rdquo; was not found on the ' . esc_html( $site ) . ' store.';
+            return;
+        }
+
+        $new_qty = max( 0, $current_qty + $adjustment );
+        $client->put( $endpoint, [ 'stock_quantity' => $new_qty, 'manage_stock' => true ] );
 
         self::log( $sku, $site, $adjustment, $reason, $note );
     }

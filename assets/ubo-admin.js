@@ -2,82 +2,189 @@
 (function($) {
     'use strict';
 
-    /* ── AJAX Live Search ── */
-    function initLiveSearch() {
-        var $input = $('#ubo-live-search');
-        if ( ! $input.length ) return;
-
-        var $suggestions = $('#ubo-search-suggestions');
-        var $form        = $input.closest('form');
-        var timer        = null;
-        var lastVal      = '';
+    /* ── Generic live search builder ── */
+    function buildLiveSearch( $input, $suggestions, opts ) {
+        // opts: { minChars, debounce, getSite, onSelect }
+        var timer   = null;
+        var lastVal = '';
 
         function showLoading() {
             $suggestions.html('<div class="ubo-suggestion-loading"><span class="ubo-spinner"></span> Searching…</div>').addClass('active');
         }
-
-        function hideSuggestions() {
+        function hide() {
             $suggestions.removeClass('active').empty();
         }
 
-        function doSearch(val) {
-            if ( val.length < 2 ) { hideSuggestions(); return; }
+        function doSearch( val ) {
+            if ( val.length < ( opts.minChars || 1 ) ) { hide(); return; }
             if ( val === lastVal ) return;
             lastVal = val;
             showLoading();
 
+            var data = {
+                action: 'ubo_search_skus',
+                nonce:  uboAdmin.nonce,
+                query:  val,
+            };
+            if ( opts.getSite ) {
+                var site = opts.getSite();
+                if ( site ) data.site = site;
+            }
+
             $.ajax({
-                url: uboAdmin.ajaxUrl,
+                url:    uboAdmin.ajaxUrl,
                 method: 'POST',
-                data: {
-                    action:   'ubo_search_skus',
-                    nonce:    uboAdmin.nonce,
-                    query:    val,
-                    page:     uboAdmin.currentPage,
-                },
-                success: function(res) {
+                data:   data,
+                success: function( res ) {
                     if ( ! res.success || ! res.data.length ) {
                         $suggestions.html('<div class="ubo-suggestion-loading">No results found.</div>').addClass('active');
                         return;
                     }
                     var html = '';
-                    $.each(res.data, function(i, item) {
-                        html += '<div class="ubo-suggestion-item" data-value="' + $('<div>').text(item.sku).html() + '">' +
-                            '<span class="ubo-sug-name">' + $('<div>').text(item.name).html() + '</span>' +
-                            '<span class="ubo-sug-sku">' + $('<div>').text(item.sku).html() + '</span>' +
+                    $.each( res.data, function( i, item ) {
+                        html += '<div class="ubo-suggestion-item" data-value="' + $('<div>').text( item.sku ).html() + '">' +
+                            '<span class="ubo-sug-name">'  + $('<div>').text( item.name ).html() + '</span>' +
+                            '<span class="ubo-sug-sku">'   + $('<div>').text( item.sku  ).html() + '</span>' +
                             '</div>';
                     });
-                    $suggestions.html(html).addClass('active');
+                    $suggestions.html( html ).addClass('active');
                 },
-                error: function() {
-                    hideSuggestions();
-                }
+                error: function() { hide(); }
             });
         }
 
-        // Trigger on input with debounce
         $input.on('input', function() {
             var val = $(this).val().trim();
-            clearTimeout(timer);
-            if ( val.length < 2 ) { hideSuggestions(); lastVal = ''; return; }
-            timer = setTimeout(function() { doSearch(val); }, 280);
+            clearTimeout( timer );
+            if ( val.length < ( opts.minChars || 1 ) ) { hide(); lastVal = ''; return; }
+            timer = setTimeout( function() { doSearch( val ); }, opts.debounce || 280 );
         });
 
-        // Click suggestion — fill input and submit
         $(document).on('click', '.ubo-suggestion-item', function() {
-            $input.val( $(this).data('value') );
-            hideSuggestions();
-            $form.submit();
+            var $item = $(this);
+            // Only handle if inside the right suggestions container
+            if ( ! $item.closest( $suggestions.parent() ).length && $suggestions.parent()[0] !== $item.closest('.ubo-search-wrap')[0] ) {
+                // fallback: check closest suggestions div
+            }
+            if ( $item.closest('#' + $suggestions.attr('id') ).length || $suggestions.find( $item[0] ).length || $item.parent()[0] === $suggestions[0] ) {
+                $input.val( $item.data('value') );
+                hide();
+                if ( opts.onSelect ) opts.onSelect( $item.data('value') );
+            }
         });
 
-        // Hide on outside click
         $(document).on('click', function(e) {
-            if ( ! $(e.target).closest('.ubo-search-wrap').length ) hideSuggestions();
+            if ( ! $(e.target).closest('.ubo-search-wrap').length ) hide();
         });
 
-        // Submit on Enter
         $input.on('keydown', function(e) {
-            if ( e.key === 'Enter' ) { hideSuggestions(); $form.submit(); }
+            if ( e.key === 'Enter' ) { hide(); }
+        });
+
+        // expose reset
+        return { hide: hide, resetLast: function() { lastVal = ''; } };
+    }
+
+    /* ── SKU Central live search ── */
+    function initSkuCentralSearch() {
+        var $input       = $('#ubo-live-search');
+        var $suggestions = $('#ubo-search-suggestions');
+        var $form        = $input.closest('form');
+        if ( ! $input.length ) return;
+
+        var search = buildLiveSearch( $input, $suggestions, {
+            minChars: 1,
+            debounce: 280,
+            onSelect: function() { $form.submit(); }
+        });
+
+        $input.on('keydown', function(e) {
+            if ( e.key === 'Enter' ) { search.hide(); $form.submit(); }
+        });
+    }
+
+    /* ── Adjustments SKU live search + validation ── */
+    function initAdjustmentsSearch() {
+        var $input       = $('#ubo-adj-sku');
+        var $suggestions = $('#ubo-adj-suggestions');
+        var $siteSelect  = $('#ubo-adj-site');
+        var $validation  = $('#ubo-sku-validation');
+        var $submitBtn   = $('#ubo-adj-submit');
+        if ( ! $input.length ) return;
+
+        var validationTimer = null;
+        var skuValid        = false;  // tracks current validation state
+
+        function setValid( msg ) {
+            skuValid = true;
+            $validation.html( '<span class="ubo-sku-valid">✔ ' + msg + '</span>' );
+            $submitBtn.prop( 'disabled', false );
+        }
+        function setInvalid( msg ) {
+            skuValid = false;
+            $validation.html( '<span class="ubo-sku-invalid">✖ ' + msg + '</span>' );
+            $submitBtn.prop( 'disabled', true );
+        }
+        function clearValidation() {
+            skuValid = false;
+            $validation.empty();
+            $submitBtn.prop( 'disabled', false ); // allow attempt; server will catch
+        }
+
+        function validateSku( sku, site ) {
+            if ( ! sku ) { clearValidation(); return; }
+            $validation.html( '<span class="ubo-sku-checking"><span class="ubo-spinner"></span> Checking SKU on ' + site + ' store…</span>' );
+
+            $.ajax({
+                url:    uboAdmin.ajaxUrl,
+                method: 'POST',
+                data:   { action: 'ubo_validate_sku', nonce: uboAdmin.nonce, sku: sku, site: site },
+                success: function( res ) {
+                    res.success ? setValid( res.data.message ) : setInvalid( res.data.message );
+                },
+                error: function() { clearValidation(); }
+            });
+        }
+
+        // Live search — scoped to selected store
+        buildLiveSearch( $input, $suggestions, {
+            minChars: 1,
+            debounce: 280,
+            getSite:  function() { return $siteSelect.val(); },
+            onSelect: function( sku ) {
+                validateSku( sku, $siteSelect.val() );
+            }
+        });
+
+        // Validate on blur
+        $input.on('blur', function() {
+            clearTimeout( validationTimer );
+            var sku = $(this).val().trim();
+            if ( sku ) {
+                validationTimer = setTimeout( function() {
+                    validateSku( sku, $siteSelect.val() );
+                }, 300 );
+            } else {
+                clearValidation();
+            }
+        });
+
+        // Re-validate when store changes
+        $siteSelect.on('change', function() {
+            var sku = $input.val().trim();
+            if ( sku ) validateSku( sku, $(this).val() );
+        });
+
+        // Block submit if explicitly invalid (server also validates, this is UX)
+        $('#ubo-adj-form').on('submit', function() {
+            var sku = $input.val().trim();
+            if ( ! sku ) return true; // let HTML5 required handle it
+            // If validation ran and failed, block
+            if ( $validation.find('.ubo-sku-invalid').length ) {
+                $input.focus();
+                return false;
+            }
+            return true;
         });
     }
 
@@ -98,10 +205,10 @@
             $btn.text('…').prop('disabled', true);
 
             $.ajax({
-                url: uboAdmin.ajaxUrl,
+                url:    uboAdmin.ajaxUrl,
                 method: 'POST',
-                data: $form.serialize() + '&action=ubo_save_reserved',
-                success: function(res) {
+                data:   $form.serialize() + '&action=ubo_save_reserved',
+                success: function( res ) {
                     if ( res.success ) {
                         $btn.text('✓').css('color','#16a34a');
                         setTimeout(function() { $btn.text(orig).css('color','').prop('disabled', false); }, 1500);
@@ -110,15 +217,14 @@
                         setTimeout(function() { $btn.text(orig).css('color','').prop('disabled', false); }, 1500);
                     }
                 },
-                error: function() {
-                    $btn.text(orig).prop('disabled', false);
-                }
+                error: function() { $btn.text(orig).prop('disabled', false); }
             });
         });
     }
 
     $(function() {
-        initLiveSearch();
+        initSkuCentralSearch();
+        initAdjustmentsSearch();
         initAutoFilters();
         initReservedAjax();
     });
