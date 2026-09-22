@@ -4,7 +4,7 @@ if ( ! current_user_can( 'manage_options' ) ) return;
 
 UBO_Adjustments::handle_form();
 $adj_error = UBO_Adjustments::$last_error;
-$adj_saved = empty( $adj_error ) && isset( $_POST['ubo_adj_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ubo_adj_nonce'] ) ), 'ubo_adjustment' );
+$adj_saved = empty( $adj_error ) && ! empty( UBO_Adjustments::$last_saved );
 
 $log = UBO_Adjustments::get_log( 200 );
 

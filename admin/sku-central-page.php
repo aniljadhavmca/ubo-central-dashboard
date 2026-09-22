@@ -4,61 +4,65 @@ if ( ! current_user_can( 'manage_options' ) ) return;
 
 $saved = UBO_Reserved::handle_form();
 
-$search       = sanitize_text_field( $_GET['search'] ?? '' );
-$sku_exact    = sanitize_text_field( $_GET['sku']    ?? '' );
-$filter_color = sanitize_text_field( $_GET['color'] ?? '' );
-$filter_size  = sanitize_text_field( $_GET['size'] ?? '' );
+$search       = sanitize_text_field( $_GET['search']       ?? '' );
+$sku_exact    = sanitize_text_field( $_GET['sku']          ?? '' );
+$filter_color = sanitize_text_field( $_GET['color']        ?? '' );
+$filter_size  = sanitize_text_field( $_GET['size']         ?? '' );
 $filter_type  = sanitize_text_field( $_GET['garment_type'] ?? '' );
 
-$sku_exact = sanitize_text_field( $_GET['sku'] ?? '' );
-
 // Fetch by name search AND by exact SKU param, merge to catch both cases
-function ubo_fetch_merged( $site_key, $search, $sku_exact ) {
-    $by_name = $search    ? UBO_Inventory::fetch( $site_key, [ 'search' => $search,    'per_page' => 100 ] ) : [];
-    $by_sku  = $sku_exact ? UBO_Inventory::fetch( $site_key, [ 'sku'    => $sku_exact, 'per_page' => 100 ] ) : [];
-    if ( ! $search && ! $sku_exact ) return UBO_Inventory::fetch( $site_key, [ 'per_page' => 100 ] );
-    $merged = [];
-    foreach ( [ $by_name, $by_sku ] as $batch ) {
-        if ( is_array( $batch ) && ! isset( $batch['error'] ) ) {
-            foreach ( $batch as $p ) $merged[ $p['id'] ] = $p;
+if ( ! function_exists( 'ubo_fetch_merged' ) ) {
+    function ubo_fetch_merged( $site_key, $search, $sku_exact ) {
+        if ( ! $search && ! $sku_exact ) {
+            return UBO_Inventory::fetch( $site_key, [ 'per_page' => 100 ] );
         }
+        $by_name = $search    ? UBO_Inventory::fetch( $site_key, [ 'search' => $search,    'per_page' => 100 ] ) : [];
+        $by_sku  = $sku_exact ? UBO_Inventory::fetch( $site_key, [ 'sku'    => $sku_exact, 'per_page' => 100 ] ) : [];
+        $merged  = [];
+        foreach ( [ $by_name, $by_sku ] as $batch ) {
+            if ( is_array( $batch ) && ! isset( $batch['error'] ) ) {
+                foreach ( $batch as $p ) $merged[ $p['id'] ] = $p;
+            }
+        }
+        return array_values( $merged );
     }
-    return array_values( $merged );
 }
 
 $us_products  = ubo_fetch_merged( 'US',    $search, $sku_exact );
 $in_products  = ubo_fetch_merged( 'India', $search, $sku_exact );
 $reserved_map = UBO_Reserved::get_all();
 
-function ubo_build_sku_index( $products ) {
-    $index = [];
-    if ( ! is_array( $products ) || isset( $products['error'] ) ) return $index;
-    foreach ( $products as $p ) {
-        $garment_type = $p['categories'][0]['name'] ?? '';
-        if ( $p['type'] === 'variable' && ! empty( $p['variations_data'] ) ) {
-            foreach ( $p['variations_data'] as $v ) {
-                $sku = $v['sku'] ?: ( $p['sku'] . '-' . $v['id'] );
-                $color = $size = '';
-                foreach ( $v['attributes'] ?? [] as $attr ) {
-                    $key = strtolower( $attr['name'] );
-                    if ( str_contains( $key, 'color' ) || str_contains( $key, 'colour' ) ) $color = $attr['option'];
-                    if ( str_contains( $key, 'size' ) ) $size = $attr['option'];
+if ( ! function_exists( 'ubo_build_sku_index' ) ) {
+    function ubo_build_sku_index( $products ) {
+        $index = [];
+        if ( ! is_array( $products ) || isset( $products['error'] ) ) return $index;
+        foreach ( $products as $p ) {
+            $garment_type = $p['categories'][0]['name'] ?? '';
+            if ( $p['type'] === 'variable' && ! empty( $p['variations_data'] ) ) {
+                foreach ( $p['variations_data'] as $v ) {
+                    $sku = $v['sku'] ?: ( $p['sku'] . '-' . $v['id'] );
+                    $color = $size = '';
+                    foreach ( $v['attributes'] ?? [] as $attr ) {
+                        $key = strtolower( $attr['name'] );
+                        if ( str_contains( $key, 'color' ) || str_contains( $key, 'colour' ) ) $color = $attr['option'];
+                        if ( str_contains( $key, 'size' ) ) $size = $attr['option'];
+                    }
+                    $index[ $sku ] = [
+                        'name' => $p['name'] . ( ( $color || $size ) ? ' — ' . implode( ' / ', array_filter( [ $color, $size ] ) ) : '' ),
+                        'sku'  => $sku, 'qty' => (int)( $v['stock_quantity'] ?? 0 ),
+                        'color' => $color, 'size' => $size, 'garment_type' => $garment_type,
+                    ];
                 }
+            } else {
+                $sku = $p['sku'] ?: 'ID-' . $p['id'];
                 $index[ $sku ] = [
-                    'name' => $p['name'] . ( ( $color || $size ) ? ' — ' . implode( ' / ', array_filter( [ $color, $size ] ) ) : '' ),
-                    'sku'  => $sku, 'qty' => (int)( $v['stock_quantity'] ?? 0 ),
-                    'color' => $color, 'size' => $size, 'garment_type' => $garment_type,
+                    'name' => $p['name'], 'sku' => $sku, 'qty' => (int)( $p['stock_quantity'] ?? 0 ),
+                    'color' => '', 'size' => '', 'garment_type' => $garment_type,
                 ];
             }
-        } else {
-            $sku = $p['sku'] ?: 'ID-' . $p['id'];
-            $index[ $sku ] = [
-                'name' => $p['name'], 'sku' => $sku, 'qty' => (int)( $p['stock_quantity'] ?? 0 ),
-                'color' => '', 'size' => '', 'garment_type' => $garment_type,
-            ];
         }
+        return $index;
     }
-    return $index;
 }
 
 $us_index = ubo_build_sku_index( $us_products );

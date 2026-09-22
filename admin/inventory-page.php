@@ -24,21 +24,25 @@ $reasons = [
     'transfer'   => '🔄 Stock Transfer',
 ];
 
-function ubo_inv_stock_class( $qty, $threshold ) {
-    if ( is_null( $qty ) || $qty === '' ) return 'qty-na';
-    $qty = (int) $qty;
-    if ( $qty === 0 )          return 'qty-zero';
-    if ( $qty <= $threshold )  return 'qty-low';
-    return 'qty-ok';
+if ( ! function_exists( 'ubo_inv_stock_class' ) ) {
+    function ubo_inv_stock_class( $qty, $threshold ) {
+        if ( is_null( $qty ) || $qty === '' ) return 'qty-na';
+        $qty = (int) $qty;
+        if ( $qty === 0 )         return 'qty-zero';
+        if ( $qty <= $threshold ) return 'qty-low';
+        return 'qty-ok';
+    }
 }
-function ubo_inv_badge( $status ) {
-    $map = [
-        'instock'     => [ 'In Stock',     'ubo-stock-ok'  ],
-        'outofstock'  => [ 'Out of Stock', 'ubo-stock-out' ],
-        'onbackorder' => [ 'Backorder',    'ubo-stock-low' ],
-    ];
-    $d = $map[ $status ] ?? [ ucfirst( $status ), 'ubo-badge-default' ];
-    return '<span class="ubo-badge ' . esc_attr( $d[1] ) . '">' . esc_html( $d[0] ) . '</span>';
+if ( ! function_exists( 'ubo_inv_badge' ) ) {
+    function ubo_inv_badge( $status ) {
+        $map = [
+            'instock'     => [ 'In Stock',     'ubo-stock-ok'  ],
+            'outofstock'  => [ 'Out of Stock', 'ubo-stock-out' ],
+            'onbackorder' => [ 'Backorder',    'ubo-stock-low' ],
+        ];
+        $d = $map[ $status ] ?? [ ucfirst( $status ), 'ubo-badge-default' ];
+        return '<span class="ubo-badge ' . esc_attr( $d[1] ) . '">' . esc_html( $d[0] ) . '</span>';
+    }
 }
 ?>
 <div class="ubo-wrap">
@@ -284,5 +288,8 @@ function ubo_inv_badge( $status ) {
         <input type="hidden" id="ubo-edit-parent" />
         <input type="hidden" id="ubo-edit-site" />
         <input type="hidden" id="ubo-edit-orig-qty" />
+        <input type="hidden" id="ubo-edit-sku" />
+        <input type="hidden" id="ubo-edit-orig-price" />
+        <input type="hidden" id="ubo-edit-orig-sale" />
     </div>
 </div>

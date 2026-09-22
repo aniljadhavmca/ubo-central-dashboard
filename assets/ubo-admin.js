@@ -227,11 +227,15 @@
         function openModal( data ) {
             origQty = data.qty !== '' ? parseInt( data.qty, 10 ) : null;
 
+            // Store all state in hidden inputs — never read from display elements
             $('#ubo-edit-id').val( data.id );
             $('#ubo-edit-type').val( data.type );
             $('#ubo-edit-parent').val( data.parent );
             $('#ubo-edit-site').val( data.site );
             $('#ubo-edit-orig-qty').val( data.qty );
+            $('#ubo-edit-sku').val( data.sku );
+            $('#ubo-edit-orig-price').val( data.price );
+            $('#ubo-edit-orig-sale').val( data.sale );
 
             $('#ubo-modal-subtitle').text( data.name );
             $('#ubo-modal-sku').text( data.sku || 'No SKU' );
@@ -249,9 +253,7 @@
             var hint = origQty !== null ? 'Current: ' + origQty + ' units' : 'No stock tracking set';
             $('#ubo-qty-hint').text( hint );
 
-            // Show/hide reason field based on whether qty differs
             toggleReasonField();
-
             $overlay.fadeIn( 150 );
             $('#ubo-edit-price').focus();
         }
@@ -313,24 +315,29 @@
             $saveBtn.text('Saving…').prop('disabled', true);
             $('#ubo-modal-notice').hide();
 
+            // Only send fields that actually changed
+            var postData = {
+                action:    'ubo_update_product',
+                nonce:     uboAdmin.nonce,
+                id:        $('#ubo-edit-id').val(),
+                type:      $('#ubo-edit-type').val(),
+                parent_id: $('#ubo-edit-parent').val(),
+                site:      $('#ubo-edit-site').val(),
+                sku:       $('#ubo-edit-sku').val(),
+                orig_qty:  $('#ubo-edit-orig-qty').val(),
+                reason:    $('#ubo-edit-reason').val(),
+                note:      $('#ubo-edit-note').val(),
+            };
+            var newPrice = $('#ubo-edit-price').val().trim();
+            var newSale  = $('#ubo-edit-sale').val().trim();
+            if ( newPrice !== $('#ubo-edit-orig-price').val() ) postData.price      = newPrice;
+            if ( newSale  !== $('#ubo-edit-orig-sale').val()  ) postData.sale_price = newSale;
+            if ( newQty   !== '' )                              postData.qty        = newQty;
+
             $.ajax({
                 url:    uboAdmin.ajaxUrl,
                 method: 'POST',
-                data: {
-                    action:    'ubo_update_product',
-                    nonce:     uboAdmin.nonce,
-                    id:        $('#ubo-edit-id').val(),
-                    type:      $('#ubo-edit-type').val(),
-                    parent_id: $('#ubo-edit-parent').val(),
-                    site:      $('#ubo-edit-site').val(),
-                    sku:       $('#ubo-modal-sku').text(),
-                    price:     $('#ubo-edit-price').val(),
-                    sale_price: $('#ubo-edit-sale').val(),
-                    qty:       newQty,
-                    orig_qty:  $('#ubo-edit-orig-qty').val(),
-                    reason:    $('#ubo-edit-reason').val(),
-                    note:      $('#ubo-edit-note').val(),
-                },
+                data:   postData,
                 success: function( res ) {
                     if ( res.success ) {
                         showNotice( '✅ ' + res.data.message, 'success' );

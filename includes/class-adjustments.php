@@ -4,6 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 class UBO_Adjustments {
 
     public static $last_error = '';
+    public static $last_saved  = false;
 
     private static function table() {
         global $wpdb;
@@ -39,6 +40,8 @@ class UBO_Adjustments {
     }
 
     public static function handle_form() {
+        self::$last_error = '';
+        self::$last_saved = false;
         if ( ! isset( $_POST['ubo_adj_nonce'] ) ) return;
         if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ubo_adj_nonce'] ) ), 'ubo_adjustment' ) ) return;
         if ( ! current_user_can( 'manage_options' ) ) return;
@@ -101,5 +104,6 @@ class UBO_Adjustments {
         $client->put( $endpoint, [ 'stock_quantity' => $new_qty, 'manage_stock' => true ] );
 
         self::log( $sku, $site, $adjustment, $reason, $note );
+        self::$last_saved = true;
     }
 }
