@@ -471,3 +471,127 @@
     .ubo-filter-bar select,
     .ubo-filter-bar input { max-width: 100%; }
 }
+
+/* ── Inventory table ── */
+.ubo-product-name { font-weight: 600; font-size: 13px; color: #1e293b; }
+.ubo-type-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+.ubo-type-simple   { background: #eff6ff; color: #1d4ed8; }
+.ubo-type-variable { background: #f5f3ff; color: #6d28d9; }
+.ubo-type-variation { background: #f0fdf4; color: #166534; }
+.ubo-price      { font-weight: 600; color: #1e293b; }
+.ubo-sale-price { font-weight: 600; color: #dc2626; }
+.ubo-price-cell { white-space: nowrap; }
+.ubo-expand-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 11px;
+    color: #94a3b8;
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: background .15s, color .15s;
+}
+.ubo-expand-btn:hover { background: #f1f5f9; color: #475569; }
+.ubo-expand-cell { width: 32px; text-align: center; }
+.ubo-var-table { background: #f8fafc; }
+.ubo-var-table thead th {
+    background: #f1f5f9;
+    font-size: 10px;
+    padding: 7px 14px;
+}
+.ubo-var-row td { background: #f8fafc; }
+.ubo-var-row:hover td { background: #f1f5f9; }
+
+/* ── Modal ── */
+.ubo-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15,23,42,.45);
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.ubo-modal {
+    background: #fff;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.2);
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+    overflow: hidden;
+}
+.ubo-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid #e2e8f0;
+}
+.ubo-modal-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+}
+.ubo-modal-subtitle {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 3px;
+    max-width: 340px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ubo-modal-close {
+    background: none;
+    border: none;
+    font-size: 16px;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    line-height: 1;
+    transition: background .15s, color .15s;
+}
+.ubo-modal-close:hover { background: #f1f5f9; color: #475569; }
+.ubo-modal-body {
+    padding: 20px 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+.ubo-modal-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+.ubo-modal-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 16px;
+}
+.ubo-modal-fields .ubo-field:nth-child(3),
+.ubo-modal-fields .ubo-field:nth-child(4),
+.ubo-modal-fields .ubo-field:nth-child(5) {
+    grid-column: 1 / -1;
+}
+.ubo-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 24px;
+    border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+    border-radius: 0 0 12px 12px;
+}

@@ -207,6 +207,162 @@
         });
     }
 
+    /* ── Inventory: expand/collapse variations ── */
+    function initInventoryExpand() {
+        $(document).on('click', '.ubo-expand-btn', function() {
+            var pid  = $(this).data('pid');
+            var $row = $('#ubo-vars-' + pid);
+            var open = $row.is(':visible');
+            $row.toggle( ! open );
+            $(this).text( open ? '▶' : '▼' );
+        });
+    }
+
+    /* ── Inventory: Edit modal ── */
+    function initInventoryEdit() {
+        var $overlay   = $('#ubo-edit-overlay');
+        var $saveBtn   = $('#ubo-modal-save');
+        var origQty    = null;
+
+        function openModal( data ) {
+            origQty = data.qty !== '' ? parseInt( data.qty, 10 ) : null;
+
+            $('#ubo-edit-id').val( data.id );
+            $('#ubo-edit-type').val( data.type );
+            $('#ubo-edit-parent').val( data.parent );
+            $('#ubo-edit-site').val( data.site );
+            $('#ubo-edit-orig-qty').val( data.qty );
+
+            $('#ubo-modal-subtitle').text( data.name );
+            $('#ubo-modal-sku').text( data.sku || 'No SKU' );
+            $('#ubo-modal-store').text( data.site === 'US' ? '🇺🇸 US' : '🇮🇳 India' )
+                .removeClass('ubo-store-us ubo-store-india')
+                .addClass( data.site === 'US' ? 'ubo-store-us' : 'ubo-store-india' );
+
+            $('#ubo-edit-price').val( data.price );
+            $('#ubo-edit-sale').val( data.sale );
+            $('#ubo-edit-qty').val( data.qty );
+            $('#ubo-edit-reason').val('');
+            $('#ubo-edit-note').val('');
+            $('#ubo-modal-notice').hide().empty();
+
+            var hint = origQty !== null ? 'Current: ' + origQty + ' units' : 'No stock tracking set';
+            $('#ubo-qty-hint').text( hint );
+
+            // Show/hide reason field based on whether qty differs
+            toggleReasonField();
+
+            $overlay.fadeIn( 150 );
+            $('#ubo-edit-price').focus();
+        }
+
+        function closeModal() {
+            $overlay.fadeOut( 120 );
+        }
+
+        function toggleReasonField() {
+            var newQty = $('#ubo-edit-qty').val();
+            var changed = newQty !== '' && origQty !== null && parseInt( newQty, 10 ) !== origQty;
+            $('#ubo-reason-field').toggle( changed );
+        }
+
+        function showNotice( msg, type ) {
+            var cls = type === 'success' ? 'ubo-notice-success' : 'ubo-notice-error';
+            $('#ubo-modal-notice').attr('class', 'ubo-notice ' + cls).html( msg ).show();
+        }
+
+        // Open on Edit button click
+        $(document).on('click', '.ubo-edit-btn', function() {
+            openModal({
+                id:     $(this).data('id'),
+                type:   $(this).data('type'),
+                parent: $(this).data('parent'),
+                site:   $(this).data('site'),
+                name:   $(this).data('name'),
+                sku:    $(this).data('sku'),
+                price:  $(this).data('price'),
+                sale:   $(this).data('sale'),
+                qty:    $(this).data('qty'),
+            });
+        });
+
+        // Toggle reason field as qty changes
+        $(document).on('input', '#ubo-edit-qty', toggleReasonField );
+
+        // Close
+        $(document).on('click', '#ubo-modal-close, #ubo-modal-cancel', closeModal );
+        $(document).on('click', '#ubo-edit-overlay', function(e) {
+            if ( $(e.target).is('#ubo-edit-overlay') ) closeModal();
+        });
+        $(document).on('keydown', function(e) {
+            if ( e.key === 'Escape' ) closeModal();
+        });
+
+        // Save
+        $(document).on('click', '#ubo-modal-save', function() {
+            var newQty    = $('#ubo-edit-qty').val().trim();
+            var qtyInt    = newQty !== '' ? parseInt( newQty, 10 ) : null;
+            var qtyChanged = qtyInt !== null && origQty !== null && qtyInt !== origQty;
+
+            if ( qtyChanged && ! $('#ubo-edit-reason').val() ) {
+                showNotice( '⚠️ Please select a reason for the quantity change.', 'error' );
+                $('#ubo-edit-reason').focus();
+                return;
+            }
+
+            $saveBtn.text('Saving…').prop('disabled', true);
+            $('#ubo-modal-notice').hide();
+
+            $.ajax({
+                url:    uboAdmin.ajaxUrl,
+                method: 'POST',
+                data: {
+                    action:    'ubo_update_product',
+                    nonce:     uboAdmin.nonce,
+                    id:        $('#ubo-edit-id').val(),
+                    type:      $('#ubo-edit-type').val(),
+                    parent_id: $('#ubo-edit-parent').val(),
+                    site:      $('#ubo-edit-site').val(),
+                    sku:       $('#ubo-modal-sku').text(),
+                    price:     $('#ubo-edit-price').val(),
+                    sale_price: $('#ubo-edit-sale').val(),
+                    qty:       newQty,
+                    orig_qty:  $('#ubo-edit-orig-qty').val(),
+                    reason:    $('#ubo-edit-reason').val(),
+                    note:      $('#ubo-edit-note').val(),
+                },
+                success: function( res ) {
+                    if ( res.success ) {
+                        showNotice( '✅ ' + res.data.message, 'success' );
+                        // Update the row in the table without page reload
+                        var id   = $('#ubo-edit-id').val();
+                        var type = $('#ubo-edit-type').val();
+                        var $btn = type === 'variation'
+                            ? $('[data-id="' + id + '"][data-type="variation"]')
+                            : $('[data-id="' + id + '"][data-type="product"]');
+                        if ( newQty !== '' ) {
+                            $btn.data('qty', newQty).data('orig-qty', newQty);
+                            origQty = qtyInt;
+                            $('#ubo-edit-orig-qty').val( newQty );
+                            $('#ubo-qty-hint').text('Current: ' + newQty + ' units');
+                        }
+                        if ( $('#ubo-edit-price').val() ) $btn.data('price', $('#ubo-edit-price').val());
+                        if ( $('#ubo-edit-sale').val() !== undefined ) $btn.data('sale', $('#ubo-edit-sale').val());
+                        setTimeout( closeModal, 1200 );
+                    } else {
+                        showNotice( '❌ ' + ( res.data.message || 'Update failed.' ), 'error' );
+                    }
+                },
+                error: function() {
+                    showNotice( '❌ Request failed. Please try again.', 'error' );
+                },
+                complete: function() {
+                    $saveBtn.text('💾 Save Changes').prop('disabled', false);
+                }
+            });
+        });
+    }
+
     /* ── Reserved stock AJAX save ── */
     function initReservedAjax() {
         $(document).on('submit', '.ubo-reserved-form', function(e) {
@@ -238,6 +394,8 @@
         initSkuCentralSearch();
         initAdjustmentsSearch();
         initAutoFilters();
+        initInventoryExpand();
+        initInventoryEdit();
         initReservedAjax();
     });
 

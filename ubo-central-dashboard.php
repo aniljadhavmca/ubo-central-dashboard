@@ -24,8 +24,8 @@ UBO_Webhook::register();
 add_action( 'admin_enqueue_scripts', 'ubo_enqueue_assets' );
 function ubo_enqueue_assets( $hook ) {
     if ( strpos( $hook, 'ubo' ) === false ) return;
-    wp_enqueue_style( 'ubo-admin', plugin_dir_url( __FILE__ ) . 'assets/ubo-admin.css', [], '1.4.0' );
-    wp_enqueue_script( 'ubo-admin', plugin_dir_url( __FILE__ ) . 'assets/ubo-admin.js', [ 'jquery' ], '1.4.0', true );
+    wp_enqueue_style( 'ubo-admin', plugin_dir_url( __FILE__ ) . 'assets/ubo-admin.css', [], '1.5.0' );
+    wp_enqueue_script( 'ubo-admin', plugin_dir_url( __FILE__ ) . 'assets/ubo-admin.js', [ 'jquery' ], '1.5.0', true );
     wp_localize_script( 'ubo-admin', 'uboAdmin', [
         'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
         'nonce'       => wp_create_nonce( 'ubo_ajax' ),
@@ -124,6 +124,76 @@ function ubo_ajax_save_reserved() {
     if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error();
     $result = UBO_Reserved::handle_form_ajax();
     $result ? wp_send_json_success() : wp_send_json_error();
+}
+
+// AJAX: update product price / sale price / stock qty
+add_action( 'wp_ajax_ubo_update_product', 'ubo_ajax_update_product' );
+function ubo_ajax_update_product() {
+    check_ajax_referer( 'ubo_ajax', 'nonce' );
+    if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( [ 'message' => 'Unauthorized.' ] );
+
+    $id        = (int)    ( $_POST['id']        ?? 0 );
+    $parent_id = (int)    ( $_POST['parent_id'] ?? 0 );
+    $type      = sanitize_text_field( wp_unslash( $_POST['type']   ?? 'product' ) );   // product | variation
+    $site      = sanitize_text_field( wp_unslash( $_POST['site']   ?? '' ) );
+    $sku       = sanitize_text_field( wp_unslash( $_POST['sku']    ?? '' ) );
+    $reason    = sanitize_text_field( wp_unslash( $_POST['reason'] ?? '' ) );
+    $note      = sanitize_textarea_field( wp_unslash( $_POST['note'] ?? '' ) );
+
+    if ( ! $id || ! in_array( $site, [ 'US', 'India' ], true ) ) {
+        wp_send_json_error( [ 'message' => 'Invalid request.' ] );
+    }
+
+    $allowed_reasons = [ 'new_stock', 'damaged', 'sample', 'return', 'correction', 'transfer' ];
+
+    // Build payload — only include fields that were actually sent
+    $payload = [];
+    if ( isset( $_POST['price'] ) && $_POST['price'] !== '' ) {
+        $payload['regular_price'] = number_format( (float) $_POST['price'], 2, '.', '' );
+    }
+    // sale_price: empty string = remove sale, otherwise set it
+    if ( isset( $_POST['sale_price'] ) ) {
+        $payload['sale_price'] = $_POST['sale_price'] !== '' ? number_format( (float) $_POST['sale_price'], 2, '.', '' ) : '';
+    }
+    $qty_changed = false;
+    $orig_qty    = null;
+    $new_qty     = null;
+    if ( isset( $_POST['qty'] ) && $_POST['qty'] !== '' ) {
+        $new_qty  = (int) $_POST['qty'];
+        $orig_qty = isset( $_POST['orig_qty'] ) && $_POST['orig_qty'] !== '' ? (int) $_POST['orig_qty'] : null;
+        $payload['stock_quantity'] = $new_qty;
+        $payload['manage_stock']   = true;
+        $qty_changed = ! is_null( $orig_qty ) && $new_qty !== $orig_qty;
+    }
+
+    if ( empty( $payload ) ) wp_send_json_error( [ 'message' => 'Nothing to update.' ] );
+
+    // Require reason if qty changed
+    if ( $qty_changed && ! in_array( $reason, $allowed_reasons, true ) ) {
+        wp_send_json_error( [ 'message' => 'Please select a reason for the quantity change.' ] );
+    }
+
+    $sites  = UBO_Orders::get_sites();
+    $s      = $sites[ $site ] ?? null;
+    if ( ! $s || empty( $s['url'] ) ) wp_send_json_error( [ 'message' => 'Store not configured.' ] );
+
+    $client   = new UBO_API_Client( $s['url'], $s['ck'], $s['cs'] );
+    $endpoint = $type === 'variation' && $parent_id
+        ? 'products/' . $parent_id . '/variations/' . $id
+        : 'products/' . $id;
+
+    $result = $client->put( $endpoint, $payload );
+    if ( isset( $result['error'] ) ) {
+        wp_send_json_error( [ 'message' => 'API error: ' . $result['error'] ] );
+    }
+
+    // Log qty change to adjustment table
+    if ( $qty_changed && $sku ) {
+        $adjustment = $new_qty - $orig_qty;
+        UBO_Adjustments::log( $sku, $site, $adjustment, $reason, $note );
+    }
+
+    wp_send_json_success( [ 'message' => 'Product updated successfully.' ] );
 }
 
 register_activation_hook( __FILE__, 'ubo_create_tables' );
