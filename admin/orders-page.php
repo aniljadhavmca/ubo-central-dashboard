@@ -11,114 +11,119 @@ if ( $status_filter ) $params['status'] = $status_filter;
 if ( $date_after )    $params['after']  = $date_after . 'T00:00:00';
 
 $all_orders = [];
-
 if ( $site_filter === 'all' || $site_filter === 'US' ) {
     $us_orders = UBO_Orders::fetch( 'US', $params );
     if ( is_array( $us_orders ) && ! isset( $us_orders['error'] ) ) {
-        foreach ( $us_orders as &$o ) { $o['_site'] = 'US'; $o['_flag'] = '🇺🇸'; $o['_currency'] = '$'; }
+        foreach ( $us_orders as &$o ) { $o['_site'] = 'US'; $o['_currency'] = '$'; }
         $all_orders = array_merge( $all_orders, $us_orders );
     }
 }
-
 if ( $site_filter === 'all' || $site_filter === 'India' ) {
     $in_orders = UBO_Orders::fetch( 'India', $params );
     if ( is_array( $in_orders ) && ! isset( $in_orders['error'] ) ) {
-        foreach ( $in_orders as &$o ) { $o['_site'] = 'India'; $o['_flag'] = '🇮🇳'; $o['_currency'] = '₹'; }
+        foreach ( $in_orders as &$o ) { $o['_site'] = 'India'; $o['_currency'] = '₹'; }
         $all_orders = array_merge( $all_orders, $in_orders );
     }
 }
-
-// Sort merged feed by date descending
 usort( $all_orders, fn( $a, $b ) => strtotime( $b['date_created'] ) - strtotime( $a['date_created'] ) );
 
-$status_colors = [
-    'completed'  => '#22c55e', 'processing' => '#f59e0b', 'on-hold'   => '#6366f1',
-    'pending'    => '#94a3b8', 'cancelled'  => '#ef4444', 'refunded'  => '#f97316', 'failed' => '#dc2626',
+$status_classes = [
+    'completed'  => 'ubo-badge-completed',  'processing' => 'ubo-badge-processing',
+    'on-hold'    => 'ubo-badge-on-hold',     'pending'    => 'ubo-badge-pending',
+    'cancelled'  => 'ubo-badge-cancelled',   'refunded'   => 'ubo-badge-refunded',
+    'failed'     => 'ubo-badge-failed',
 ];
+$statuses = [ 'pending', 'processing', 'on-hold', 'completed', 'cancelled', 'refunded', 'failed' ];
 ?>
-<style>
-.ubo-wrap { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 24px 20px; max-width: 1400px; }
-.ubo-wrap h1 { font-size: 22px; font-weight: 700; color: #1e293b; margin-bottom: 20px; }
-.ubo-filters { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
-.ubo-filters select, .ubo-filters input { padding: 6px 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 13px; }
-.ubo-filters .button { padding: 6px 16px; }
-.ubo-badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; color: #fff; text-transform: capitalize; }
-.ubo-table { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
-.ubo-table th { background: #1e293b; color: #fff; padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
-.ubo-table td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: top; color: #334155; }
-.ubo-table tr:last-child td { border-bottom: none; }
-.ubo-table tr:hover td { background: #f8fafc; }
-.ubo-site-tag { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
-.ubo-site-us { background: #dbeafe; color: #1d4ed8; }
-.ubo-site-in { background: #ffedd5; color: #c2410c; }
-.ubo-count { font-size: 12px; color: #94a3b8; margin-bottom: 12px; }
-</style>
-
 <div class="ubo-wrap">
-    <h1>🗂️ Unified Order Feed</h1>
 
-    <form method="get">
+    <div class="ubo-page-header">
+        <div>
+            <h1>🗂️ Unified Order Feed</h1>
+            <div class="ubo-subtitle">All orders from US &amp; India stores in one view</div>
+        </div>
+    </div>
+
+    <form method="get" id="ubo-orders-form">
         <input type="hidden" name="page" value="ubo-orders" />
-        <div class="ubo-filters">
-            <select name="site">
-                <option value="all"  <?php selected( $site_filter, 'all' ); ?>>All Stores</option>
-                <option value="US"   <?php selected( $site_filter, 'US' ); ?>>🇺🇸 US Only</option>
-                <option value="India"<?php selected( $site_filter, 'India' ); ?>>🇮🇳 India Only</option>
+        <div class="ubo-filter-bar">
+            <label>Store</label>
+            <select name="site" class="ubo-auto-filter">
+                <option value="all"   <?php selected( $site_filter, 'all' ); ?>>All Stores</option>
+                <option value="US"    <?php selected( $site_filter, 'US' ); ?>>🇺🇸 United States</option>
+                <option value="India" <?php selected( $site_filter, 'India' ); ?>>🇮🇳 India</option>
             </select>
-            <select name="status">
+
+            <label>Status</label>
+            <select name="status" class="ubo-auto-filter">
                 <option value="">All Statuses</option>
-                <?php foreach ( ['pending','processing','on-hold','completed','cancelled','refunded','failed'] as $s ) : ?>
-                    <option value="<?php echo $s; ?>" <?php selected( $status_filter, $s ); ?>><?php echo ucfirst( $s ); ?></option>
+                <?php foreach ( $statuses as $s ) : ?>
+                    <option value="<?php echo esc_attr( $s ); ?>" <?php selected( $status_filter, $s ); ?>><?php echo esc_html( ucfirst( $s ) ); ?></option>
                 <?php endforeach; ?>
             </select>
-            <input type="date" name="date_after" value="<?php echo esc_attr( $date_after ); ?>" />
-            <button class="button button-primary">Filter</button>
+
+            <label>From date</label>
+            <input type="date" name="date_after" value="<?php echo esc_attr( $date_after ); ?>" class="ubo-auto-filter" />
+
+            <?php if ( $status_filter || $date_after || $site_filter !== 'all' ) : ?>
+                <a href="<?php echo esc_url( admin_url('admin.php?page=ubo-orders') ); ?>" class="ubo-btn ubo-btn-secondary">✕ Clear</a>
+            <?php endif; ?>
         </div>
     </form>
 
-    <p class="ubo-count"><?php echo count( $all_orders ); ?> orders found</p>
+    <div class="ubo-result-bar">
+        <span><strong><?php echo count( $all_orders ); ?></strong> orders found</span>
+    </div>
 
     <?php if ( empty( $all_orders ) ) : ?>
-        <p style="color:#94a3b8;">No orders found. Check API credentials in Settings.</p>
+        <div class="ubo-panel"><div class="ubo-empty-state"><div class="ubo-empty-icon">📭</div><p>No orders found. Try adjusting your filters or check API credentials in Settings.</p></div></div>
     <?php else : ?>
-        <table class="ubo-table">
-            <thead>
-                <tr>
-                    <th>Store</th><th>Order #</th><th>Date</th><th>Customer</th>
-                    <th>Items</th><th>Status</th><th>Total</th><th>Shipping</th>
-                </tr>
-            </thead>
-            <tbody>
-            <?php foreach ( $all_orders as $order ) :
-                $billing  = $order['billing'] ?? [];
-                $shipping = $order['shipping'] ?? [];
-                $name     = trim( ( $billing['first_name'] ?? '' ) . ' ' . ( $billing['last_name'] ?? '' ) ) ?: 'Guest';
-                $status   = $order['status'] ?? 'unknown';
-                $color    = isset( $status_colors[ $status ] ) ? $status_colors[ $status ] : '#94a3b8';
-                $date     = date( 'M j, Y g:i A', strtotime( $order['date_created'] ) );
-                $ship_str = implode( ', ', array_filter( [ $shipping['city'] ?? '', $shipping['country'] ?? '' ] ) );
-                $items    = [];
-                foreach ( $order['line_items'] ?? [] as $item ) {
-                    $meta = [];
-                    foreach ( $item['meta_data'] ?? [] as $m ) {
-                        if ( ! str_starts_with( $m['key'], '_' ) ) $meta[] = $m['value'];
+        <div class="ubo-table-wrap">
+            <table class="ubo-table">
+                <thead>
+                    <tr>
+                        <th>Store</th><th>Order #</th><th>Date &amp; Time</th><th>Customer</th>
+                        <th>Items</th><th>Status</th><th>Total</th><th>Ship To</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php foreach ( $all_orders as $order ) :
+                    $billing  = $order['billing'] ?? [];
+                    $shipping = $order['shipping'] ?? [];
+                    $name     = trim( ( $billing['first_name'] ?? '' ) . ' ' . ( $billing['last_name'] ?? '' ) ) ?: 'Guest';
+                    $status   = $order['status'] ?? 'unknown';
+                    $cls      = $status_classes[ $status ] ?? 'ubo-badge-default';
+                    $date     = date( 'M j, Y · g:i A', strtotime( $order['date_created'] ) );
+                    $ship_str = implode( ', ', array_filter( [ $shipping['city'] ?? '', $shipping['country'] ?? '' ] ) );
+                    $items    = [];
+                    foreach ( $order['line_items'] ?? [] as $item ) {
+                        $meta = [];
+                        foreach ( $item['meta_data'] ?? [] as $m ) {
+                            if ( ! str_starts_with( $m['key'], '_' ) ) $meta[] = $m['value'];
+                        }
+                        $items[] = $item['name'] . ( $meta ? ' (' . implode( ', ', $meta ) . ')' : '' ) . ' ×' . $item['quantity'];
                     }
-                    $items[] = $item['name'] . ( $meta ? ' (' . implode( ', ', $meta ) . ')' : '' ) . ' ×' . $item['quantity'];
-                }
-                $site_class = $order['_site'] === 'US' ? 'ubo-site-us' : 'ubo-site-in';
-            ?>
-                <tr>
-                    <td><span class="ubo-site-tag <?php echo esc_attr( $site_class ); ?>"><?php echo esc_html( $order['_flag'] . ' ' . $order['_site'] ); ?></span></td>
-                    <td><strong>#<?php echo esc_html( $order['number'] ); ?></strong></td>
-                    <td style="white-space:nowrap;font-size:12px;"><?php echo esc_html( $date ); ?></td>
-                    <td><?php echo esc_html( $name ); ?><br><span style="font-size:11px;color:#94a3b8;"><?php echo esc_html( $billing['email'] ?? '' ); ?></span></td>
-                    <td style="font-size:12px;"><?php echo esc_html( implode( ' | ', $items ) ); ?></td>
-                    <td><span class="ubo-badge" style="background:<?php echo esc_attr( $color ); ?>"><?php echo esc_html( $status ); ?></span></td>
-                    <td><?php echo esc_html( $order['_currency'] . $order['total'] ); ?></td>
-                    <td style="font-size:12px;"><?php echo esc_html( $ship_str ); ?></td>
-                </tr>
-            <?php endforeach; ?>
-            </tbody>
-        </table>
+                    $store_cls = $order['_site'] === 'US' ? 'ubo-store-us' : 'ubo-store-india';
+                    $flag      = $order['_site'] === 'US' ? '🇺🇸' : '🇮🇳';
+                ?>
+                    <tr>
+                        <td><span class="ubo-store-tag <?php echo esc_attr( $store_cls ); ?>"><?php echo $flag . ' ' . esc_html( $order['_site'] ); ?></span></td>
+                        <td><strong>#<?php echo esc_html( $order['number'] ); ?></strong></td>
+                        <td style="white-space:nowrap;font-size:12px;color:#64748b;"><?php echo esc_html( $date ); ?></td>
+                        <td>
+                            <?php echo esc_html( $name ); ?>
+                            <?php if ( ! empty( $billing['email'] ) ) : ?>
+                                <br><span style="font-size:11px;color:#94a3b8;"><?php echo esc_html( $billing['email'] ); ?></span>
+                            <?php endif; ?>
+                        </td>
+                        <td style="font-size:12px;max-width:220px;"><?php echo esc_html( implode( ' · ', $items ) ); ?></td>
+                        <td><span class="ubo-badge <?php echo esc_attr( $cls ); ?>"><?php echo esc_html( $status ); ?></span></td>
+                        <td style="font-weight:600;"><?php echo esc_html( $order['_currency'] . $order['total'] ); ?></td>
+                        <td style="font-size:12px;color:#64748b;"><?php echo esc_html( $ship_str ); ?></td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
     <?php endif; ?>
 </div>

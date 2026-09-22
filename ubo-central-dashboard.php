@@ -20,6 +20,59 @@ require_once UBO_PLUGIN_DIR . 'includes/class-webhook.php';
 
 UBO_Webhook::register();
 
+// Enqueue admin assets
+add_action( 'admin_enqueue_scripts', 'ubo_enqueue_assets' );
+function ubo_enqueue_assets( $hook ) {
+    if ( strpos( $hook, 'ubo' ) === false ) return;
+    wp_enqueue_style( 'ubo-admin', plugin_dir_url( __FILE__ ) . 'assets/ubo-admin.css', [], '1.2.0' );
+    wp_enqueue_script( 'ubo-admin', plugin_dir_url( __FILE__ ) . 'assets/ubo-admin.js', [ 'jquery' ], '1.2.0', true );
+    wp_localize_script( 'ubo-admin', 'uboAdmin', [
+        'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
+        'nonce'       => wp_create_nonce( 'ubo_ajax' ),
+        'currentPage' => sanitize_text_field( $_GET['page'] ?? '' ),
+    ] );
+}
+
+// AJAX: live search SKUs
+add_action( 'wp_ajax_ubo_search_skus', 'ubo_ajax_search_skus' );
+function ubo_ajax_search_skus() {
+    check_ajax_referer( 'ubo_ajax', 'nonce' );
+    if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error();
+
+    $query = sanitize_text_field( wp_unslash( $_POST['query'] ?? '' ) );
+    $page  = sanitize_text_field( wp_unslash( $_POST['page'] ?? 'ubo-sku' ) );
+    if ( strlen( $query ) < 2 ) wp_send_json_error();
+
+    // Search both stores
+    $results = [];
+    foreach ( [ 'US', 'India' ] as $site_key ) {
+        $products = UBO_Inventory::fetch( $site_key, [ 'search' => $query, 'per_page' => 20 ] );
+        if ( ! is_array( $products ) || isset( $products['error'] ) ) continue;
+        foreach ( $products as $p ) {
+            if ( $p['type'] === 'variable' && ! empty( $p['variations_data'] ) ) {
+                foreach ( $p['variations_data'] as $v ) {
+                    $sku = $v['sku'] ?: $p['sku'] . '-' . $v['id'];
+                    $attrs = implode( ' / ', array_map( fn($a) => $a['option'], $v['attributes'] ?? [] ) );
+                    $results[ $sku ] = [ 'sku' => $sku, 'name' => $p['name'] . ( $attrs ? ' — ' . $attrs : '' ) ];
+                }
+            } else {
+                $sku = $p['sku'] ?: 'ID-' . $p['id'];
+                $results[ $sku ] = [ 'sku' => $sku, 'name' => $p['name'] ];
+            }
+        }
+    }
+    wp_send_json_success( array_values( array_slice( $results, 0, 15 ) ) );
+}
+
+// AJAX: save reserved stock
+add_action( 'wp_ajax_ubo_save_reserved', 'ubo_ajax_save_reserved' );
+function ubo_ajax_save_reserved() {
+    check_ajax_referer( 'ubo_ajax', 'nonce' );
+    if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error();
+    $result = UBO_Reserved::handle_form_ajax();
+    $result ? wp_send_json_success() : wp_send_json_error();
+}
+
 register_activation_hook( __FILE__, 'ubo_create_tables' );
 function ubo_create_tables() {
     global $wpdb;

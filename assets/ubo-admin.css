@@ -1,0 +1,435 @@
+/* ============================================================
+   UBO Central Dashboard — Shared Admin Styles
+   WooCommerce-inspired, clean and modern
+   ============================================================ */
+
+/* Base */
+.ubo-wrap {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    padding: 20px 24px 40px;
+    max-width: 1500px;
+    color: #1e293b;
+}
+
+/* Page Header */
+.ubo-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e2e8f0;
+}
+.ubo-page-header h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.ubo-page-header .ubo-subtitle {
+    font-size: 13px;
+    color: #64748b;
+    margin-top: 2px;
+}
+.ubo-sync-badge {
+    font-size: 12px;
+    color: #64748b;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 5px 12px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* ── Filter Bar ── */
+.ubo-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+}
+.ubo-filter-bar label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-right: 2px;
+}
+.ubo-filter-bar select,
+.ubo-filter-bar input[type="text"],
+.ubo-filter-bar input[type="date"],
+.ubo-filter-bar input[type="search"] {
+    height: 34px;
+    padding: 0 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #1e293b;
+    background: #fff;
+    min-width: 140px;
+    max-width: 200px;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,.04);
+    transition: border-color .15s, box-shadow .15s;
+}
+.ubo-filter-bar select:focus,
+.ubo-filter-bar input:focus {
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 2px rgba(124,58,237,.12);
+    outline: none;
+}
+.ubo-filter-bar .ubo-search-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+    max-width: 320px;
+}
+.ubo-filter-bar .ubo-search-wrap input {
+    width: 100%;
+    max-width: 100%;
+    padding-left: 32px;
+}
+.ubo-filter-bar .ubo-search-wrap .ubo-search-icon {
+    position: absolute;
+    left: 9px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 14px;
+    pointer-events: none;
+}
+.ubo-filter-bar .ubo-search-suggestions {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.1);
+    z-index: 999;
+    max-height: 280px;
+    overflow-y: auto;
+    display: none;
+}
+.ubo-filter-bar .ubo-search-suggestions.active { display: block; }
+.ubo-suggestion-item {
+    padding: 9px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #334155;
+}
+.ubo-suggestion-item:last-child { border-bottom: none; }
+.ubo-suggestion-item:hover { background: #f8fafc; }
+.ubo-suggestion-item .ubo-sug-sku { font-size: 11px; color: #94a3b8; font-family: monospace; }
+.ubo-suggestion-item .ubo-sug-name { font-weight: 500; }
+.ubo-suggestion-loading { padding: 12px 14px; font-size: 13px; color: #94a3b8; text-align: center; }
+
+/* Filter buttons */
+.ubo-btn {
+    height: 34px;
+    padding: 0 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all .15s;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.ubo-btn-primary {
+    background: #7c3aed;
+    color: #fff;
+    border-color: #7c3aed;
+}
+.ubo-btn-primary:hover { background: #6d28d9; border-color: #6d28d9; color: #fff; }
+.ubo-btn-secondary {
+    background: #fff;
+    color: #374151;
+    border-color: #d1d5db;
+}
+.ubo-btn-secondary:hover { background: #f9fafb; color: #374151; }
+.ubo-btn-danger {
+    background: #fff;
+    color: #dc2626;
+    border-color: #fca5a5;
+}
+.ubo-btn-danger:hover { background: #fef2f2; }
+
+/* Result count bar */
+.ubo-result-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 13px;
+    color: #64748b;
+}
+.ubo-result-bar strong { color: #1e293b; }
+
+/* ── Table ── */
+.ubo-table-wrap {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,.05);
+}
+.ubo-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+.ubo-table thead th {
+    background: #f8fafc;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
+}
+.ubo-table tbody td {
+    padding: 11px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+    vertical-align: middle;
+}
+.ubo-table tbody tr:last-child td { border-bottom: none; }
+.ubo-table tbody tr:hover td { background: #fafbff; }
+
+/* Badges */
+.ubo-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: capitalize;
+    white-space: nowrap;
+}
+.ubo-badge-completed  { background: #dcfce7; color: #166534; }
+.ubo-badge-processing { background: #fef3c7; color: #92400e; }
+.ubo-badge-on-hold    { background: #ede9fe; color: #5b21b6; }
+.ubo-badge-pending    { background: #f1f5f9; color: #475569; }
+.ubo-badge-cancelled  { background: #fee2e2; color: #991b1b; }
+.ubo-badge-refunded   { background: #ffedd5; color: #9a3412; }
+.ubo-badge-failed     { background: #fee2e2; color: #7f1d1d; }
+.ubo-badge-default    { background: #f1f5f9; color: #475569; }
+
+/* Store tags */
+.ubo-store-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.ubo-store-us    { background: #dbeafe; color: #1d4ed8; }
+.ubo-store-india { background: #ffedd5; color: #c2410c; }
+
+/* Stock qty colours */
+.qty-ok   { color: #16a34a; font-weight: 700; }
+.qty-low  { color: #d97706; font-weight: 700; }
+.qty-zero { color: #dc2626; font-weight: 700; }
+.qty-na   { color: #cbd5e1; }
+.qty-avail { color: #7c3aed; font-weight: 700; }
+
+/* Stock status pill */
+.ubo-stock-ok   { background: #dcfce7; color: #166534; }
+.ubo-stock-low  { background: #fef3c7; color: #92400e; }
+.ubo-stock-out  { background: #fee2e2; color: #991b1b; }
+
+/* Inline reserved input */
+.ubo-reserved-wrap { display: flex; align-items: center; gap: 5px; }
+.ubo-reserved-input {
+    width: 58px;
+    height: 28px;
+    padding: 0 6px;
+    border: 1px solid #d1d5db;
+    border-radius: 5px;
+    font-size: 12px;
+    text-align: center;
+    color: #1e293b;
+}
+.ubo-reserved-input:focus { border-color: #7c3aed; outline: none; }
+.ubo-save-btn {
+    height: 28px;
+    padding: 0 10px;
+    font-size: 11px;
+    font-weight: 600;
+    background: #f1f5f9;
+    border: 1px solid #d1d5db;
+    border-radius: 5px;
+    cursor: pointer;
+    color: #374151;
+    transition: all .15s;
+}
+.ubo-save-btn:hover { background: #e2e8f0; }
+
+/* Stat cards */
+.ubo-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+}
+.ubo-stat-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 18px 20px;
+    text-decoration: none;
+    display: block;
+    transition: box-shadow .2s, border-color .2s;
+    position: relative;
+    overflow: hidden;
+}
+.ubo-stat-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); border-color: #c7d2fe; }
+.ubo-stat-card .ubo-stat-icon { font-size: 22px; margin-bottom: 10px; display: block; }
+.ubo-stat-card .ubo-stat-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #94a3b8; margin-bottom: 4px; }
+.ubo-stat-card .ubo-stat-value { font-size: 28px; font-weight: 700; color: #1e293b; line-height: 1.1; }
+.ubo-stat-card .ubo-stat-sub { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+.ubo-stat-card .ubo-stat-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; }
+.ubo-stat-card.ubo-stat-blue  .ubo-stat-bar { background: #3b82f6; }
+.ubo-stat-card.ubo-stat-orange .ubo-stat-bar { background: #f97316; }
+.ubo-stat-card.ubo-stat-green  .ubo-stat-bar { background: #22c55e; }
+.ubo-stat-card.ubo-stat-red    .ubo-stat-bar { background: #ef4444; }
+
+/* Panel */
+.ubo-panel {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.ubo-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid #f1f5f9;
+}
+.ubo-panel-header h3 { font-size: 14px; font-weight: 700; color: #1e293b; margin: 0; display: flex; align-items: center; gap: 7px; }
+.ubo-panel-header a { font-size: 12px; color: #7c3aed; text-decoration: none; font-weight: 500; }
+.ubo-panel-header a:hover { text-decoration: underline; }
+.ubo-panel-body { padding: 0; }
+
+/* Form card */
+.ubo-form-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 24px;
+    max-width: 560px;
+    margin-bottom: 28px;
+}
+.ubo-form-card h2 { font-size: 15px; font-weight: 700; color: #1e293b; margin: 0 0 18px; }
+.ubo-field { margin-bottom: 14px; }
+.ubo-field label { display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 5px; }
+.ubo-field input,
+.ubo-field select,
+.ubo-field textarea {
+    width: 100%;
+    height: 36px;
+    padding: 0 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #1e293b;
+    background: #fff;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,.04);
+    transition: border-color .15s;
+}
+.ubo-field textarea { height: 72px; padding: 8px 10px; resize: vertical; }
+.ubo-field input:focus,
+.ubo-field select:focus,
+.ubo-field textarea:focus { border-color: #7c3aed; outline: none; box-shadow: 0 0 0 2px rgba(124,58,237,.1); }
+.ubo-field .ubo-hint { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+
+/* Notices */
+.ubo-notice {
+    padding: 10px 14px;
+    border-radius: 7px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.ubo-notice-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+.ubo-notice-error   { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+.ubo-notice-info    { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+
+/* Empty state */
+.ubo-empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: #94a3b8;
+}
+.ubo-empty-state .ubo-empty-icon { font-size: 36px; margin-bottom: 10px; }
+.ubo-empty-state p { font-size: 14px; }
+
+/* Adj log */
+.adj-pos { color: #16a34a; font-weight: 700; }
+.adj-neg { color: #dc2626; font-weight: 700; }
+
+/* SKU code */
+.ubo-sku-code {
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-size: 11px;
+    background: #f1f5f9;
+    color: #475569;
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+/* Spinner */
+.ubo-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid #e2e8f0;
+    border-top-color: #7c3aed;
+    border-radius: 50%;
+    animation: ubo-spin .6s linear infinite;
+    vertical-align: middle;
+}
+@keyframes ubo-spin { to { transform: rotate(360deg); } }
+
+/* Responsive */
+@media (max-width: 1100px) {
+    .ubo-stat-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 700px) {
+    .ubo-stat-grid { grid-template-columns: 1fr; }
+    .ubo-filter-bar { flex-direction: column; align-items: stretch; }
+    .ubo-filter-bar select,
+    .ubo-filter-bar input { max-width: 100%; }
+}

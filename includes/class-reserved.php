@@ -47,6 +47,18 @@ class UBO_Reserved {
         return $map;
     }
 
+    public static function handle_form_ajax() {
+        if ( ! isset( $_POST['ubo_reserved_nonce'] ) ) return false;
+        if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ubo_reserved_nonce'] ) ), 'ubo_ajax' ) ) return false;
+        if ( ! current_user_can( 'manage_options' ) ) return false;
+        $sku  = sanitize_text_field( wp_unslash( $_POST['reserved_sku'] ?? '' ) );
+        $site = sanitize_text_field( wp_unslash( $_POST['reserved_site'] ?? '' ) );
+        $qty  = (int) ( $_POST['reserved_qty'] ?? 0 );
+        if ( ! $sku || ! in_array( $site, [ 'US', 'India' ], true ) ) return false;
+        self::set( $sku, $site, $qty );
+        return true;
+    }
+
     public static function handle_form() {
         if ( ! isset( $_POST['ubo_reserved_nonce'] ) ) return null;
         if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ubo_reserved_nonce'] ) ), 'ubo_reserved' ) ) return null;
