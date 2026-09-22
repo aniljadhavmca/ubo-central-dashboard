@@ -30,4 +30,19 @@ if ( isset( $_POST['ubo_settings_nonce'] ) && wp_verify_nonce( $_POST['ubo_setti
 
         <?php submit_button( 'Save Settings' ); ?>
     </form>
+
+    <h2>Alert Settings</h2>
+    <form method="post">
+        <?php wp_nonce_field( 'ubo_save_settings', 'ubo_settings_nonce' ); ?>
+        <table class="form-table">
+            <tr>
+                <th>Low Stock Threshold</th>
+                <td>
+                    <input class="small-text" type="number" name="ubo_low_stock_threshold" value="<?php echo esc_attr( get_option('ubo_low_stock_threshold', 10) ); ?>" min="1" />
+                    <p class="description">Products at or below this quantity will appear in the Alerts panel.</p>
+                </td>
+            </tr>
+        </table>
+        <?php submit_button( 'Save Settings' ); ?>
+    </form>
 </div>
