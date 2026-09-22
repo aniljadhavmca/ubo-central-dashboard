@@ -1,12 +1,14 @@
 <?php
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-if ( isset( $_POST['ubo_settings_nonce'] ) && wp_verify_nonce( $_POST['ubo_settings_nonce'], 'ubo_save_settings' ) ) {
-    $fields = [ 'ubo_us_url', 'ubo_us_ck', 'ubo_us_cs', 'ubo_in_url', 'ubo_in_ck', 'ubo_in_cs' ];
-    foreach ( $fields as $field ) {
-        update_option( $field, sanitize_text_field( $_POST[ $field ] ?? '' ) );
+if ( isset( $_POST['ubo_settings_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ubo_settings_nonce'] ) ), 'ubo_save_settings' ) ) {
+    if ( current_user_can( 'manage_options' ) ) {
+        $fields = [ 'ubo_us_url', 'ubo_us_ck', 'ubo_us_cs', 'ubo_us_webhook_secret', 'ubo_in_url', 'ubo_in_ck', 'ubo_in_cs', 'ubo_in_webhook_secret', 'ubo_low_stock_threshold' ];
+        foreach ( $fields as $field ) {
+            update_option( $field, sanitize_text_field( wp_unslash( $_POST[ $field ] ?? '' ) ) );
+        }
+        echo '<div class="notice notice-success"><p>Settings saved.</p></div>';
     }
-    echo '<div class="notice notice-success"><p>Settings saved.</p></div>';
 }
 ?>
 <div class="wrap">

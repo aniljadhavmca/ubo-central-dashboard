@@ -52,3 +52,4 @@ class UBO_API_Client {
         if ( is_wp_error( $response ) ) return [ 'error' => $response->get_error_message() ];
         return json_decode( wp_remote_retrieve_body( $response ), true ) ?? [];
     }
+}
