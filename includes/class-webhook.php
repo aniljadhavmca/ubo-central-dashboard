@@ -21,10 +21,12 @@ class UBO_Webhook {
         $secret    = get_option( $site === 'US' ? 'ubo_us_webhook_secret' : 'ubo_in_webhook_secret' );
         $signature = $request->get_header( 'x-wc-webhook-signature' );
 
-        if ( empty( $secret ) ) return true; // secret not configured — allow (dev mode)
+        if ( empty( $secret ) || empty( $signature ) ) {
+            return new WP_Error( 'ubo_webhook_auth', 'Webhook secret not configured or signature missing.', [ 'status' => 401 ] );
+        }
 
-        $body    = $request->get_body();
-        $hash    = base64_encode( hash_hmac( 'sha256', $body, $secret, true ) );
+        $body = $request->get_body();
+        $hash = base64_encode( hash_hmac( 'sha256', $body, $secret, true ) );
         return hash_equals( $hash, (string) $signature );
     }
 

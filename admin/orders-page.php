@@ -94,7 +94,7 @@ $status_colors = [
                 $shipping = $order['shipping'] ?? [];
                 $name     = trim( ( $billing['first_name'] ?? '' ) . ' ' . ( $billing['last_name'] ?? '' ) ) ?: 'Guest';
                 $status   = $order['status'] ?? 'unknown';
-                $color    = $status_colors[ $status ] ?? '#94a3b8';
+                $color    = isset( $status_colors[ $status ] ) ? $status_colors[ $status ] : '#94a3b8';
                 $date     = date( 'M j, Y g:i A', strtotime( $order['date_created'] ) );
                 $ship_str = implode( ', ', array_filter( [ $shipping['city'] ?? '', $shipping['country'] ?? '' ] ) );
                 $items    = [];
@@ -108,12 +108,12 @@ $status_colors = [
                 $site_class = $order['_site'] === 'US' ? 'ubo-site-us' : 'ubo-site-in';
             ?>
                 <tr>
-                    <td><span class="ubo-site-tag <?php echo $site_class; ?>"><?php echo $order['_flag'] . ' ' . esc_html( $order['_site'] ); ?></span></td>
+                    <td><span class="ubo-site-tag <?php echo esc_attr( $site_class ); ?>"><?php echo esc_html( $order['_flag'] . ' ' . $order['_site'] ); ?></span></td>
                     <td><strong>#<?php echo esc_html( $order['number'] ); ?></strong></td>
                     <td style="white-space:nowrap;font-size:12px;"><?php echo esc_html( $date ); ?></td>
                     <td><?php echo esc_html( $name ); ?><br><span style="font-size:11px;color:#94a3b8;"><?php echo esc_html( $billing['email'] ?? '' ); ?></span></td>
                     <td style="font-size:12px;"><?php echo esc_html( implode( ' | ', $items ) ); ?></td>
-                    <td><span class="ubo-badge" style="background:<?php echo $color; ?>"><?php echo esc_html( $status ); ?></span></td>
+                    <td><span class="ubo-badge" style="background:<?php echo esc_attr( $color ); ?>"><?php echo esc_html( $status ); ?></span></td>
                     <td><?php echo esc_html( $order['_currency'] . $order['total'] ); ?></td>
                     <td style="font-size:12px;"><?php echo esc_html( $ship_str ); ?></td>
                 </tr>

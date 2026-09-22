@@ -206,8 +206,8 @@ $threshold = (int) get_option( 'ubo_low_stock_threshold', UBO_LOW_STOCK_THRESHOL
                     <td style="font-size:12px;color:#64748b;"><?php echo esc_html( $meta['garment_type'] ?? '' ); ?></td>
                     <td style="font-size:12px;"><?php echo esc_html( $meta['color'] ?? '' ); ?></td>
                     <td style="font-size:12px;"><?php echo esc_html( $meta['size'] ?? '' ); ?></td>
-                    <td class="<?php echo $us_class; ?>"><?php echo is_null( $us_qty ) ? '—' : $us_qty; ?></td>
-                    <td class="<?php echo $in_class; ?>"><?php echo is_null( $in_qty ) ? '—' : $in_qty; ?></td>
+                    <td class="<?php echo esc_attr( $us_class ); ?>"><?php echo is_null( $us_qty ) ? '—' : (int) $us_qty; ?></td>
+                    <td class="<?php echo esc_attr( $in_class ); ?>"><?php echo is_null( $in_qty ) ? '—' : (int) $in_qty; ?></td>
 
                     <!-- US Reserved inline edit -->
                     <td>
@@ -231,8 +231,8 @@ $threshold = (int) get_option( 'ubo_low_stock_threshold', UBO_LOW_STOCK_THRESHOL
                         </form>
                     </td>
 
-                    <td class="qty-avail"><?php echo $total_avail; ?></td>
-                    <td><span style="font-size:11px;font-weight:700;color:<?php echo $status_color; ?>"><?php echo $status; ?></span></td>
+                    <td class="qty-avail"><?php echo (int) $total_avail; ?></td>
+                    <td><span style="font-size:11px;font-weight:700;color:<?php echo esc_attr( $status_color ); ?>"><?php echo esc_html( $status ); ?></span></td>
                 </tr>
             <?php endforeach; ?>
             </tbody>
