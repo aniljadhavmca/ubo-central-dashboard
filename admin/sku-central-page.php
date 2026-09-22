@@ -160,7 +160,7 @@ $has_filters = $search || $sku_exact || $filter_color || $filter_size || $filter
     <?php if ( empty( $all_skus ) ) : ?>
         <div class="ubo-panel"><div class="ubo-empty-state"><div class="ubo-empty-icon">📦</div><p>No products found. Try a different search or check API credentials.</p></div></div>
     <?php else : ?>
-        <div class="ubo-table-wrap">
+        <div class="ubo-table-wrap" data-ubo-threshold="<?php echo (int) $threshold; ?>">
             <table class="ubo-table">
                 <thead>
                     <tr>
@@ -198,7 +198,7 @@ $has_filters = $search || $sku_exact || $filter_color || $filter_size || $filter
                     elseif ( $total_avail <= $threshold ) { $stock_label = 'Low Stock';    $stock_cls = 'ubo-badge ubo-stock-low'; }
                     else                                  { $stock_label = 'In Stock';     $stock_cls = 'ubo-badge ubo-stock-ok'; }
                 ?>
-                    <tr>
+                    <tr data-sku="<?php echo esc_attr( $sku ); ?>" data-us-stock="<?php echo (int)( $us_qty ?? 0 ); ?>" data-in-stock="<?php echo (int)( $in_qty ?? 0 ); ?>">
                         <td><span class="ubo-sku-code"><?php echo esc_html( $sku ); ?></span></td>
                         <td style="max-width:200px;"><?php echo esc_html( $meta['name'] ?? $sku ); ?></td>
                         <td style="color:#64748b;font-size:12px;"><?php echo esc_html( $meta['garment_type'] ?? '' ); ?></td>
@@ -208,7 +208,7 @@ $has_filters = $search || $sku_exact || $filter_color || $filter_size || $filter
                         <td class="<?php echo esc_attr( $in_class ); ?>"><?php echo is_null( $in_qty ) ? '—' : (int) $in_qty; ?></td>
 
                         <td>
-                            <form class="ubo-reserved-form" method="post">
+                            <form class="ubo-reserved-form" method="post" data-site="US" data-sku="<?php echo esc_attr( $sku ); ?>">
                                 <?php wp_nonce_field( 'ubo_ajax', 'ubo_reserved_nonce' ); ?>
                                 <input type="hidden" name="reserved_sku" value="<?php echo esc_attr( $sku ); ?>" />
                                 <input type="hidden" name="reserved_site" value="US" />
@@ -219,7 +219,7 @@ $has_filters = $search || $sku_exact || $filter_color || $filter_size || $filter
                             </form>
                         </td>
                         <td>
-                            <form class="ubo-reserved-form" method="post">
+                            <form class="ubo-reserved-form" method="post" data-site="India" data-sku="<?php echo esc_attr( $sku ); ?>">
                                 <?php wp_nonce_field( 'ubo_ajax', 'ubo_reserved_nonce' ); ?>
                                 <input type="hidden" name="reserved_sku" value="<?php echo esc_attr( $sku ); ?>" />
                                 <input type="hidden" name="reserved_site" value="India" />

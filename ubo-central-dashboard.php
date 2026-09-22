@@ -24,8 +24,8 @@ UBO_Webhook::register();
 add_action( 'admin_enqueue_scripts', 'ubo_enqueue_assets' );
 function ubo_enqueue_assets( $hook ) {
     if ( strpos( $hook, 'ubo' ) === false ) return;
-    wp_enqueue_style( 'ubo-admin', plugin_dir_url( __FILE__ ) . 'assets/ubo-admin.css', [], '1.8.0' );
-    wp_enqueue_script( 'ubo-admin', plugin_dir_url( __FILE__ ) . 'assets/ubo-admin.js', [ 'jquery' ], '1.8.0', true );
+    wp_enqueue_style( 'ubo-admin', plugin_dir_url( __FILE__ ) . 'assets/ubo-admin.css', [], '1.9.0' );
+    wp_enqueue_script( 'ubo-admin', plugin_dir_url( __FILE__ ) . 'assets/ubo-admin.js', [ 'jquery' ], '1.9.0', true );
     wp_localize_script( 'ubo-admin', 'uboAdmin', [
         'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
         'nonce'       => wp_create_nonce( 'ubo_ajax' ),
@@ -121,9 +121,65 @@ function ubo_ajax_validate_sku() {
 add_action( 'wp_ajax_ubo_save_reserved', 'ubo_ajax_save_reserved' );
 function ubo_ajax_save_reserved() {
     check_ajax_referer( 'ubo_ajax', 'nonce' );
-    if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error();
-    $result = UBO_Reserved::handle_form_ajax();
-    $result ? wp_send_json_success() : wp_send_json_error();
+    if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( [ 'message' => 'Unauthorized.' ] );
+
+    $sku  = sanitize_text_field( wp_unslash( $_POST['reserved_sku']  ?? '' ) );
+    $site = sanitize_text_field( wp_unslash( $_POST['reserved_site'] ?? '' ) );
+    $qty  = (int) ( $_POST['reserved_qty'] ?? 0 );
+
+    if ( ! $sku || ! in_array( $site, [ 'US', 'India' ], true ) ) {
+        wp_send_json_error( [ 'message' => 'Invalid input.' ] );
+    }
+
+    // 1. Save reserved qty to local DB
+    UBO_Reserved::set( $sku, $site, $qty );
+
+    // 2. Fetch current stock from WC and push available = stock - reserved back to WC
+    $sites  = UBO_Orders::get_sites();
+    $s      = $sites[ $site ] ?? null;
+    $avail  = null;
+
+    if ( $s && ! empty( $s['url'] ) ) {
+        $client   = new UBO_API_Client( $s['url'], $s['ck'], $s['cs'] );
+        $products = $client->get( 'products', [ 'sku' => $sku, 'per_page' => 5 ] );
+
+        if ( is_array( $products ) && ! isset( $products['error'] ) && ! empty( $products ) ) {
+            // Find exact SKU match — could be simple product or variation
+            $target_endpoint = null;
+            $stock_qty       = 0;
+
+            foreach ( $products as $p ) {
+                if ( $p['sku'] === $sku ) {
+                    $target_endpoint = 'products/' . (int) $p['id'];
+                    $stock_qty       = (int) ( $p['stock_quantity'] ?? 0 );
+                    break;
+                }
+                if ( $p['type'] === 'variable' ) {
+                    $vars = $client->get( 'products/' . (int) $p['id'] . '/variations', [ 'per_page' => 100 ] );
+                    if ( is_array( $vars ) ) {
+                        foreach ( $vars as $v ) {
+                            if ( $v['sku'] === $sku ) {
+                                $target_endpoint = 'products/' . (int) $p['id'] . '/variations/' . (int) $v['id'];
+                                $stock_qty       = (int) ( $v['stock_quantity'] ?? 0 );
+                                break 2;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if ( $target_endpoint ) {
+                $avail = max( 0, $stock_qty - $qty );
+                // Push available stock back to WC so the live store reflects reserved units
+                $client->put( $target_endpoint, [
+                    'stock_quantity' => $avail,
+                    'manage_stock'   => true,
+                ] );
+            }
+        }
+    }
+
+    wp_send_json_success( [ 'reserved' => $qty, 'available' => $avail ] );
 }
 
 // AJAX: update product price / sale price / stock qty

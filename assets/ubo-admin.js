@@ -400,10 +400,48 @@
             $.ajax({
                 url:    uboAdmin.ajaxUrl,
                 method: 'POST',
-                data:   $form.serialize() + '&action=ubo_save_reserved',
+                data:   $form.serialize() + '&action=ubo_save_reserved&nonce=' + encodeURIComponent( uboAdmin.nonce ),
                 success: function( res ) {
                     if ( res.success ) {
                         $btn.text('✓').css('color','#16a34a');
+
+                        // Recalculate Available cell in this row
+                        var site      = $form.data('site');
+                        var newRes    = parseInt( $form.find('[name="reserved_qty"]').val(), 10 ) || 0;
+                        var $row      = $form.closest('tr');
+                        var usStock   = parseInt( $row.data('us-stock'), 10 ) || 0;
+                        var inStock   = parseInt( $row.data('in-stock'), 10 ) || 0;
+
+                        // Get the OTHER store's current reserved from its input
+                        var otherRes  = 0;
+                        if ( site === 'US' ) {
+                            var $otherForm = $row.find('.ubo-reserved-form[data-site="India"]');
+                        } else {
+                            var $otherForm = $row.find('.ubo-reserved-form[data-site="US"]');
+                        }
+                        if ( $otherForm.length ) {
+                            otherRes = parseInt( $otherForm.find('[name="reserved_qty"]').val(), 10 ) || 0;
+                        }
+
+                        var usRes    = site === 'US'    ? newRes : otherRes;
+                        var inRes    = site === 'India' ? newRes : otherRes;
+                        var usAvail  = Math.max( 0, usStock - usRes );
+                        var inAvail  = Math.max( 0, inStock - inRes );
+                        var total    = usAvail + inAvail;
+
+                        $row.find('.qty-avail').text( total );
+
+                        // Update status badge
+                        var threshold = parseInt( $row.closest('.ubo-table-wrap').data('ubo-threshold') || 10, 10 );
+                        var $badge    = $row.find('.ubo-badge');
+                        if ( total === 0 ) {
+                            $badge.attr('class','ubo-badge ubo-stock-out').text('Out of Stock');
+                        } else if ( total <= threshold ) {
+                            $badge.attr('class','ubo-badge ubo-stock-low').text('Low Stock');
+                        } else {
+                            $badge.attr('class','ubo-badge ubo-stock-ok').text('In Stock');
+                        }
+
                         setTimeout(function() { $btn.text(orig).css('color','').prop('disabled', false); }, 1500);
                     } else {
                         $btn.text('!').css('color','#dc2626');
