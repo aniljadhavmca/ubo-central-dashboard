@@ -461,6 +461,23 @@
 }
 @keyframes ubo-spin { to { transform: rotate(360deg); } }
 
+.ubo-btn-no-sku { opacity: .5; cursor: not-allowed !important; }
+.ubo-no-sku-msg {
+    display: inline-flex;
+    align-items: center;
+    font-size: 11px;
+    color: #dc2626;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 5px;
+    padding: 3px 8px;
+    margin-left: 6px;
+    white-space: nowrap;
+    vertical-align: middle;
+    animation: ubo-fadein .15s ease;
+}
+@keyframes ubo-fadein { from { opacity:0; transform:translateY(-2px); } to { opacity:1; transform:translateY(0); } }
+
 /* Responsive */
 @media (max-width: 1100px) {
     .ubo-stat-grid { grid-template-columns: repeat(2, 1fr); }

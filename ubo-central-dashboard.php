@@ -24,8 +24,8 @@ UBO_Webhook::register();
 add_action( 'admin_enqueue_scripts', 'ubo_enqueue_assets' );
 function ubo_enqueue_assets( $hook ) {
     if ( strpos( $hook, 'ubo' ) === false ) return;
-    wp_enqueue_style( 'ubo-admin', plugin_dir_url( __FILE__ ) . 'assets/ubo-admin.css', [], '1.6.0' );
-    wp_enqueue_script( 'ubo-admin', plugin_dir_url( __FILE__ ) . 'assets/ubo-admin.js', [ 'jquery' ], '1.6.0', true );
+    wp_enqueue_style( 'ubo-admin', plugin_dir_url( __FILE__ ) . 'assets/ubo-admin.css', [], '1.7.0' );
+    wp_enqueue_script( 'ubo-admin', plugin_dir_url( __FILE__ ) . 'assets/ubo-admin.js', [ 'jquery' ], '1.7.0', true );
     wp_localize_script( 'ubo-admin', 'uboAdmin', [
         'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
         'nonce'       => wp_create_nonce( 'ubo_ajax' ),

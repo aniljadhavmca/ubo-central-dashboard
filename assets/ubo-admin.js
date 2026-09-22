@@ -275,13 +275,27 @@
 
         // Open on Edit button click
         $(document).on('click', '.ubo-edit-btn', function() {
+            var sku = $(this).data('sku');
+            if ( ! sku || sku === '' ) {
+                // Show inline notice on the button row instead of opening modal
+                var $btn  = $(this);
+                var orig  = $btn.text();
+                $btn.text('No SKU').prop('disabled', true).addClass('ubo-btn-no-sku');
+                var $msg = $('<span class="ubo-no-sku-msg">SKU not set — add a SKU in WooCommerce before editing</span>');
+                $btn.after( $msg );
+                setTimeout( function() {
+                    $btn.text( orig ).prop('disabled', false).removeClass('ubo-btn-no-sku');
+                    $msg.remove();
+                }, 3000 );
+                return;
+            }
             openModal({
                 id:     $(this).data('id'),
                 type:   $(this).data('type'),
                 parent: $(this).data('parent'),
                 site:   $(this).data('site'),
                 name:   $(this).data('name'),
-                sku:    $(this).data('sku'),
+                sku:    sku,
                 price:  $(this).data('price'),
                 sale:   $(this).data('sale'),
                 qty:    $(this).data('qty'),
