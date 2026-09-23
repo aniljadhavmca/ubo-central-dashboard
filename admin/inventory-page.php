@@ -15,6 +15,17 @@ $has_error   = isset( $products['error'] );
 $has_filters = $stock_filter || $search;
 $threshold   = (int) get_option( 'ubo_low_stock_threshold', UBO_LOW_STOCK_THRESHOLD );
 
+// Build a set of SKUs that have been manually adjusted for this site
+$adjusted_skus = [];
+if ( ! $has_error && ! empty( $products ) ) {
+    global $wpdb;
+    $table = $wpdb->prefix . 'ubo_stock_adjustments';
+    $rows  = $wpdb->get_results(
+        $wpdb->prepare( "SELECT DISTINCT sku FROM {$table} WHERE site = %s", $site_filter )
+    );
+    foreach ( $rows as $r ) $adjusted_skus[ $r->sku ] = true;
+}
+
 $reasons = [
     'new_stock'  => '📦 New Stock Received',
     'damaged'    => '⚠️ Damaged Inventory',
@@ -134,7 +145,12 @@ if ( ! function_exists( 'ubo_inv_badge' ) ) {
                             <?php endif; ?>
                         </td>
                         <td>
-                            <div class="ubo-product-name"><?php echo esc_html( $product['name'] ); ?></div>
+                            <div class="ubo-product-name">
+                                <?php echo esc_html( $product['name'] ); ?>
+                                <?php if ( ! empty( $product['sku'] ) && isset( $adjusted_skus[ $product['sku'] ] ) ) : ?>
+                                    <span class="ubo-adjusted-tag">adjusted</span>
+                                <?php endif; ?>
+                            </div>
                             <div style="font-size:11px;color:#94a3b8;">ID: <?php echo $pid; ?></div>
                         </td>
                         <td><span class="ubo-sku-code"><?php echo esc_html( $product['sku'] ?: '—' ); ?></span></td>
@@ -191,6 +207,9 @@ if ( ! function_exists( 'ubo_inv_badge' ) ) {
                                             <td style="padding-left:40px;color:#94a3b8;">↳</td>
                                             <td>
                                                 <span style="font-size:13px;color:#334155;"><?php echo esc_html( $attrs ?: 'Default' ); ?></span>
+                                                <?php if ( ! empty( $v['sku'] ) && isset( $adjusted_skus[ $v['sku'] ] ) ) : ?>
+                                                    <span class="ubo-adjusted-tag">adjusted</span>
+                                                <?php endif; ?>
                                                 <span style="font-size:11px;color:#94a3b8;margin-left:6px;">ID: <?php echo $vid; ?></span>
                                             </td>
                                             <td><span class="ubo-sku-code"><?php echo esc_html( $v['sku'] ?: '—' ); ?></span></td>
