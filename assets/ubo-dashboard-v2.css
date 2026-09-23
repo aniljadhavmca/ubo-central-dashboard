@@ -604,7 +604,7 @@
     .ubo-alert-kpi-row { grid-template-columns: repeat(2, 1fr); }
 }
 
-/* ── Sales Chart ── */
+/* ── Sales Chart (SVG Grafana-style) ── */
 .ubo-v2-chart-card { padding: 0; }
 .ubo-v2-chart-toolbar {
     display: flex;
@@ -630,7 +630,6 @@
 }
 .ubo-v2-chart-tab:hover { background: #f6f8fa; color: #3c4257; border-color: #c9d2dc; }
 .ubo-v2-chart-tab.active { background: #635bff; border-color: #635bff; color: #fff; font-weight: 600; }
-/* Strong specificity to beat WP admin select styles */
 #wpwrap .ubo-v2-chart-sel,
 .ubo-v2-wrap select.ubo-v2-chart-sel {
     font-size: 12px !important;
@@ -654,30 +653,69 @@
 }
 #wpwrap .ubo-v2-chart-sel:focus,
 .ubo-v2-wrap select.ubo-v2-chart-sel:focus { border-color: #635bff !important; }
-.ubo-v2-chart-wrap {
+
+/* Graf chart layout */
+.ubo-graf-wrap {
+    padding: 16px 18px 8px;
+    min-height: 280px;
     position: relative;
-    height: 300px;
-    padding: 16px 18px 12px;
-    box-sizing: border-box;
 }
-.ubo-v2-chart-wrap canvas {
-    display: block;
-    position: absolute;
-    top: 16px; left: 18px; right: 18px; bottom: 12px;
-    width: calc(100% - 36px) !important;
-    height: calc(100% - 28px) !important;
-}
-.ubo-v2-chart-overlay {
-    position: absolute;
-    inset: 0;
+.ubo-graf-state {
     display: flex;
     align-items: center;
     justify-content: center;
+    height: 240px;
     font-size: 12px;
     color: #8792a2;
-    background: rgba(255,255,255,.9);
-    pointer-events: none;
 }
+.ubo-graf-chart {
+    display: flex;
+    gap: 0;
+    align-items: stretch;
+}
+.ubo-graf-y-axis {
+    position: relative;
+    width: 44px;
+    flex-shrink: 0;
+    height: 232px;
+}
+.ubo-graf-plot-area {
+    flex: 1;
+    position: relative;
+    min-width: 0;
+}
+.ubo-graf-svg {
+    display: block;
+    width: 100%;
+    overflow: visible;
+}
+.ubo-graf-x-axis {
+    position: relative;
+    height: 22px;
+    margin-top: 4px;
+}
+.ubo-graf-tooltip {
+    position: absolute;
+    background: #1a1f36;
+    color: #fff;
+    font-size: 11px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 10;
+    line-height: 1.5;
+    box-shadow: 0 4px 12px rgba(0,0,0,.2);
+}
+
+/* ── Alerts grid (compact side-by-side boxes) ── */
+.ubo-alerts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 20px;
+}
+.ubo-alert-card-wrap { min-width: 0; }
 
 /* ── Responsive ── */
 @media (max-width: 1200px) {

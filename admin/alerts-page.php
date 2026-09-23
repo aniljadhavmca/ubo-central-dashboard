@@ -155,124 +155,134 @@ $active_store = in_array( $_GET['store'] ?? '', [ 'US', 'India' ] ) ? $_GET['sto
 
     <!-- ── US Store panel ── -->
     <div class="ubo-store-panel <?php echo $active_store === 'US' ? 'active' : ''; ?>" data-panel="US">
+        <div class="ubo-alerts-grid">
 
-        <div class="ubo-v2-section-title">⛔ Out of Stock — 🇺🇸 US Store</div>
-        <div class="ubo-v2-card ubo-alert-card ubo-alert-card-red" style="margin-bottom:16px;">
-            <div class="ubo-v2-card-header">
-                <span>Out of Stock Products</span>
-                <span class="ubo-alert-badge ubo-alert-badge-red"><?php echo count( $us_out_items ); ?> items</span>
-            </div>
-            <?php if ( empty( $us_out_items ) ) : ?>
-                <div class="ubo-v2-empty"><span style="font-size:24px;">✅</span><br>All products in stock</div>
-            <?php else : ?>
-                <div class="ubo-alert-list">
-                    <?php foreach ( $us_out_items as $p ) : ?>
-                    <div class="ubo-alert-row">
-                        <div class="ubo-alert-severity ubo-alert-severity-red"></div>
-                        <div class="ubo-alert-row-info">
-                            <div class="ubo-alert-row-name"><?php echo esc_html( $p['name'] ); ?></div>
-                            <?php if ( ! empty( $p['sku'] ) ) : ?><div class="ubo-alert-row-sku"><?php echo esc_html( $p['sku'] ); ?></div><?php endif; ?>
-                        </div>
-                        <span class="ubo-alert-badge ubo-alert-badge-red">0 units</span>
+            <div class="ubo-alert-card-wrap">
+                <div class="ubo-v2-section-title">⛔ Out of Stock</div>
+                <div class="ubo-v2-card ubo-alert-card ubo-alert-card-red">
+                    <div class="ubo-v2-card-header">
+                        <span>Out of Stock Products</span>
+                        <span class="ubo-alert-badge ubo-alert-badge-red"><?php echo count( $us_out_items ); ?> items</span>
                     </div>
-                    <?php endforeach; ?>
+                    <?php if ( empty( $us_out_items ) ) : ?>
+                        <div class="ubo-v2-empty"><span style="font-size:22px;">✅</span><br>All in stock</div>
+                    <?php else : ?>
+                        <div class="ubo-alert-list">
+                            <?php foreach ( $us_out_items as $p ) : ?>
+                            <div class="ubo-alert-row">
+                                <div class="ubo-alert-severity ubo-alert-severity-red"></div>
+                                <div class="ubo-alert-row-info">
+                                    <div class="ubo-alert-row-name"><?php echo esc_html( $p['name'] ); ?></div>
+                                    <?php if ( ! empty( $p['sku'] ) ) : ?><div class="ubo-alert-row-sku"><?php echo esc_html( $p['sku'] ); ?></div><?php endif; ?>
+                                </div>
+                                <span class="ubo-alert-badge ubo-alert-badge-red">0</span>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
-            <?php endif; ?>
+            </div>
+
+            <div class="ubo-alert-card-wrap">
+                <div class="ubo-v2-section-title">⚠️ Low Stock <span style="font-size:11px;font-weight:400;color:#8792a2;">≤ <?php echo $threshold; ?></span></div>
+                <div class="ubo-v2-card ubo-alert-card ubo-alert-card-amber">
+                    <div class="ubo-v2-card-header">
+                        <span>Low Stock Products</span>
+                        <span class="ubo-alert-badge ubo-alert-badge-amber"><?php echo count( $us_low ); ?> items</span>
+                    </div>
+                    <?php if ( empty( $us_low ) ) : ?>
+                        <div class="ubo-v2-empty"><span style="font-size:22px;">✅</span><br>None low</div>
+                    <?php else : ?>
+                        <div class="ubo-alert-list">
+                            <?php foreach ( $us_low as $item ) :
+                                $pct = $threshold > 0 ? round( ( $item['qty'] / $threshold ) * 100 ) : 0;
+                                $bc  = $item['qty'] <= 2 ? '#ef4444' : ( $item['qty'] <= 5 ? '#f97316' : '#f59e0b' );
+                            ?>
+                            <div class="ubo-alert-row">
+                                <div class="ubo-alert-severity ubo-alert-severity-amber"></div>
+                                <div class="ubo-alert-row-info">
+                                    <div class="ubo-alert-row-name"><?php echo esc_html( $item['name'] ); ?></div>
+                                    <?php if ( ! empty( $item['sku'] ) ) : ?><div class="ubo-alert-row-sku"><?php echo esc_html( $item['sku'] ); ?></div><?php endif; ?>
+                                    <div class="ubo-alert-stock-bar-wrap"><div class="ubo-alert-stock-bar-fill" style="width:<?php echo $pct; ?>%;background:<?php echo $bc; ?>;"></div></div>
+                                </div>
+                                <span class="ubo-alert-badge" style="background:#fff7ed;color:#c2410c;"><?php echo (int)$item['qty']; ?></span>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
         </div>
 
-        <div class="ubo-v2-section-title">⚠️ Low Stock — 🇺🇸 US Store <span style="font-size:11px;font-weight:400;color:#8792a2;">(≤ <?php echo $threshold; ?> units)</span></div>
-        <div class="ubo-v2-card ubo-alert-card ubo-alert-card-amber" style="margin-bottom:24px;">
-            <div class="ubo-v2-card-header">
-                <span>Low Stock Products</span>
-                <span class="ubo-alert-badge ubo-alert-badge-amber"><?php echo count( $us_low ); ?> items</span>
-            </div>
-            <?php if ( empty( $us_low ) ) : ?>
-                <div class="ubo-v2-empty"><span style="font-size:24px;">✅</span><br>No low-stock products</div>
-            <?php else : ?>
-                <div class="ubo-alert-list">
-                    <?php foreach ( $us_low as $item ) :
-                        $pct = $threshold > 0 ? round( ( $item['qty'] / $threshold ) * 100 ) : 0;
-                        $bar_color = $item['qty'] <= 2 ? '#ef4444' : ( $item['qty'] <= 5 ? '#f97316' : '#f59e0b' );
-                    ?>
-                    <div class="ubo-alert-row">
-                        <div class="ubo-alert-severity ubo-alert-severity-amber"></div>
-                        <div class="ubo-alert-row-info">
-                            <div class="ubo-alert-row-name"><?php echo esc_html( $item['name'] ); ?></div>
-                            <?php if ( ! empty( $item['sku'] ) ) : ?><div class="ubo-alert-row-sku"><?php echo esc_html( $item['sku'] ); ?></div><?php endif; ?>
-                            <div class="ubo-alert-stock-bar-wrap"><div class="ubo-alert-stock-bar-fill" style="width:<?php echo $pct; ?>%;background:<?php echo $bar_color; ?>;"></div></div>
-                        </div>
-                        <span class="ubo-alert-badge" style="background:#fff7ed;color:#c2410c;"><?php echo (int) $item['qty']; ?> left</span>
-                    </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
-        </div>
-
-        <!-- US Insights -->
-        <div class="ubo-v2-section-title">📊 Sales Insights — 🇺🇸 US Store <span style="font-size:11px;font-weight:400;color:#8792a2;">(This Year)</span></div>
+        <div class="ubo-v2-section-title" style="margin-top:8px;">📊 Sales Insights — 🇺🇸 US Store <span style="font-size:11px;font-weight:400;color:#8792a2;">(This Year)</span></div>
         <?php ubo_render_insights( $us_insights, 'us' ); ?>
-
     </div>
 
     <!-- ── India Store panel ── -->
     <div class="ubo-store-panel <?php echo $active_store === 'India' ? 'active' : ''; ?>" data-panel="India">
+        <div class="ubo-alerts-grid">
 
-        <div class="ubo-v2-section-title">⛔ Out of Stock — 🇮🇳 India Store</div>
-        <div class="ubo-v2-card ubo-alert-card ubo-alert-card-red" style="margin-bottom:16px;">
-            <div class="ubo-v2-card-header">
-                <span>Out of Stock Products</span>
-                <span class="ubo-alert-badge ubo-alert-badge-red"><?php echo count( $in_out_items ); ?> items</span>
-            </div>
-            <?php if ( empty( $in_out_items ) ) : ?>
-                <div class="ubo-v2-empty"><span style="font-size:24px;">✅</span><br>All products in stock</div>
-            <?php else : ?>
-                <div class="ubo-alert-list">
-                    <?php foreach ( $in_out_items as $p ) : ?>
-                    <div class="ubo-alert-row">
-                        <div class="ubo-alert-severity ubo-alert-severity-red"></div>
-                        <div class="ubo-alert-row-info">
-                            <div class="ubo-alert-row-name"><?php echo esc_html( $p['name'] ); ?></div>
-                            <?php if ( ! empty( $p['sku'] ) ) : ?><div class="ubo-alert-row-sku"><?php echo esc_html( $p['sku'] ); ?></div><?php endif; ?>
-                        </div>
-                        <span class="ubo-alert-badge ubo-alert-badge-red">0 units</span>
+            <div class="ubo-alert-card-wrap">
+                <div class="ubo-v2-section-title">⛔ Out of Stock</div>
+                <div class="ubo-v2-card ubo-alert-card ubo-alert-card-red">
+                    <div class="ubo-v2-card-header">
+                        <span>Out of Stock Products</span>
+                        <span class="ubo-alert-badge ubo-alert-badge-red"><?php echo count( $in_out_items ); ?> items</span>
                     </div>
-                    <?php endforeach; ?>
+                    <?php if ( empty( $in_out_items ) ) : ?>
+                        <div class="ubo-v2-empty"><span style="font-size:22px;">✅</span><br>All in stock</div>
+                    <?php else : ?>
+                        <div class="ubo-alert-list">
+                            <?php foreach ( $in_out_items as $p ) : ?>
+                            <div class="ubo-alert-row">
+                                <div class="ubo-alert-severity ubo-alert-severity-red"></div>
+                                <div class="ubo-alert-row-info">
+                                    <div class="ubo-alert-row-name"><?php echo esc_html( $p['name'] ); ?></div>
+                                    <?php if ( ! empty( $p['sku'] ) ) : ?><div class="ubo-alert-row-sku"><?php echo esc_html( $p['sku'] ); ?></div><?php endif; ?>
+                                </div>
+                                <span class="ubo-alert-badge ubo-alert-badge-red">0</span>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
-            <?php endif; ?>
+            </div>
+
+            <div class="ubo-alert-card-wrap">
+                <div class="ubo-v2-section-title">⚠️ Low Stock <span style="font-size:11px;font-weight:400;color:#8792a2;">≤ <?php echo $threshold; ?></span></div>
+                <div class="ubo-v2-card ubo-alert-card ubo-alert-card-amber">
+                    <div class="ubo-v2-card-header">
+                        <span>Low Stock Products</span>
+                        <span class="ubo-alert-badge ubo-alert-badge-amber"><?php echo count( $in_low ); ?> items</span>
+                    </div>
+                    <?php if ( empty( $in_low ) ) : ?>
+                        <div class="ubo-v2-empty"><span style="font-size:22px;">✅</span><br>None low</div>
+                    <?php else : ?>
+                        <div class="ubo-alert-list">
+                            <?php foreach ( $in_low as $item ) :
+                                $pct = $threshold > 0 ? round( ( $item['qty'] / $threshold ) * 100 ) : 0;
+                                $bc  = $item['qty'] <= 2 ? '#ef4444' : ( $item['qty'] <= 5 ? '#f97316' : '#f59e0b' );
+                            ?>
+                            <div class="ubo-alert-row">
+                                <div class="ubo-alert-severity ubo-alert-severity-amber"></div>
+                                <div class="ubo-alert-row-info">
+                                    <div class="ubo-alert-row-name"><?php echo esc_html( $item['name'] ); ?></div>
+                                    <?php if ( ! empty( $item['sku'] ) ) : ?><div class="ubo-alert-row-sku"><?php echo esc_html( $item['sku'] ); ?></div><?php endif; ?>
+                                    <div class="ubo-alert-stock-bar-wrap"><div class="ubo-alert-stock-bar-fill" style="width:<?php echo $pct; ?>%;background:<?php echo $bc; ?>;"></div></div>
+                                </div>
+                                <span class="ubo-alert-badge" style="background:#fff7ed;color:#c2410c;"><?php echo (int)$item['qty']; ?></span>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
         </div>
 
-        <div class="ubo-v2-section-title">⚠️ Low Stock — 🇮🇳 India Store <span style="font-size:11px;font-weight:400;color:#8792a2;">(≤ <?php echo $threshold; ?> units)</span></div>
-        <div class="ubo-v2-card ubo-alert-card ubo-alert-card-amber" style="margin-bottom:24px;">
-            <div class="ubo-v2-card-header">
-                <span>Low Stock Products</span>
-                <span class="ubo-alert-badge ubo-alert-badge-amber"><?php echo count( $in_low ); ?> items</span>
-            </div>
-            <?php if ( empty( $in_low ) ) : ?>
-                <div class="ubo-v2-empty"><span style="font-size:24px;">✅</span><br>No low-stock products</div>
-            <?php else : ?>
-                <div class="ubo-alert-list">
-                    <?php foreach ( $in_low as $item ) :
-                        $pct = $threshold > 0 ? round( ( $item['qty'] / $threshold ) * 100 ) : 0;
-                        $bar_color = $item['qty'] <= 2 ? '#ef4444' : ( $item['qty'] <= 5 ? '#f97316' : '#f59e0b' );
-                    ?>
-                    <div class="ubo-alert-row">
-                        <div class="ubo-alert-severity ubo-alert-severity-amber"></div>
-                        <div class="ubo-alert-row-info">
-                            <div class="ubo-alert-row-name"><?php echo esc_html( $item['name'] ); ?></div>
-                            <?php if ( ! empty( $item['sku'] ) ) : ?><div class="ubo-alert-row-sku"><?php echo esc_html( $item['sku'] ); ?></div><?php endif; ?>
-                            <div class="ubo-alert-stock-bar-wrap"><div class="ubo-alert-stock-bar-fill" style="width:<?php echo $pct; ?>%;background:<?php echo $bar_color; ?>;"></div></div>
-                        </div>
-                        <span class="ubo-alert-badge" style="background:#fff7ed;color:#c2410c;"><?php echo (int) $item['qty']; ?> left</span>
-                    </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
-        </div>
-
-        <!-- India Insights -->
-        <div class="ubo-v2-section-title">📊 Sales Insights — 🇮🇳 India Store <span style="font-size:11px;font-weight:400;color:#8792a2;">(This Year)</span></div>
+        <div class="ubo-v2-section-title" style="margin-top:8px;">📊 Sales Insights — 🇮🇳 India Store <span style="font-size:11px;font-weight:400;color:#8792a2;">(This Year)</span></div>
         <?php ubo_render_insights( $in_insights, 'in' ); ?>
-
     </div>
 
 </div>
