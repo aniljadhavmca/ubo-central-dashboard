@@ -49,48 +49,30 @@ class UBO_Webhook {
 
     private static function process_order( $site, $order ) {
         $status = $order['status'] ?? '';
-
-        // Only reduce stock for active orders
         if ( ! in_array( $status, [ 'processing', 'completed', 'on-hold' ], true ) ) return;
 
         $line_items = $order['line_items'] ?? [];
         if ( empty( $line_items ) ) return;
 
-        $sites  = UBO_Orders::get_sites();
-        $s      = $sites[ $site ] ?? null;
-        if ( ! $s || empty( $s['url'] ) ) return;
-
-        $client = new UBO_API_Client( $s['url'], $s['ck'], $s['cs'] );
-
+        // WooCommerce already reduces stock_quantity automatically on order.
+        // We only log the event here for the adjustment history.
         foreach ( $line_items as $item ) {
-            $product_id   = $item['variation_id'] ?: $item['product_id'];
-            $qty_ordered  = (int) $item['quantity'];
-            $sku          = $item['sku'] ?? '';
+            $qty_ordered = (int) ( $item['quantity'] ?? 0 );
+            $sku         = sanitize_text_field( $item['sku'] ?? '' );
+            $product_id  = (int) ( $item['variation_id'] ?: $item['product_id'] ?? 0 );
+            if ( ! $qty_ordered ) continue;
 
-            if ( ! $product_id || ! $qty_ordered ) continue;
-
-            // Fetch current stock
-            $endpoint = $item['variation_id']
-                ? 'products/' . $item['product_id'] . '/variations/' . $item['variation_id']
-                : 'products/' . $item['product_id'];
-
-            $product     = $client->get( $endpoint );
-            $current_qty = (int) ( $product['stock_quantity'] ?? 0 );
-            $new_qty     = max( 0, $current_qty - $qty_ordered );
-
-            $client->put( $endpoint, [
-                'stock_quantity' => $new_qty,
-                'manage_stock'   => true,
-            ] );
-
-            // Log the auto-reduction
             UBO_Adjustments::log(
                 $sku ?: 'product-' . $product_id,
                 $site,
                 -$qty_ordered,
                 'order',
-                'Auto-reduced — Order #' . ( $order['number'] ?? $order['id'] ) . ' (' . $status . ')'
+                'Auto — Order #' . sanitize_text_field( (string)( $order['number'] ?? $order['id'] ?? '' ) ) . ' (' . $status . ')'
             );
         }
+
+        // Bust dashboard transients so next page load shows fresh data
+        delete_transient( 'ubo_totals_' . $site );
+        delete_transient( 'ubo_top_sellers_' . $site );
     }
 }

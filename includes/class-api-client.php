@@ -15,6 +15,9 @@ class UBO_API_Client {
     }
 
     public function get( $endpoint, $params = [] ) {
+        if ( strpos( $this->base_url, 'https://' ) !== 0 ) {
+            return [ 'error' => 'API URL must use HTTPS.' ];
+        }
         $params['per_page'] = $params['per_page'] ?? 100;
         $url = $this->base_url . $endpoint . '?' . http_build_query( $params );
 

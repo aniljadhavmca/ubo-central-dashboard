@@ -72,7 +72,9 @@ $total_low    = count( $us_low ) + count( $in_low );
 $total_healthy = max( 0, $us_total + $in_total - $total_out - $total_low );
 
 // Active store tab from URL, default US
-$active_store = in_array( $_GET['store'] ?? '', [ 'US', 'India' ] ) ? $_GET['store'] : 'US';
+$active_store = in_array( sanitize_text_field( wp_unslash( $_GET['store'] ?? '' ) ), [ 'US', 'India' ] )
+    ? sanitize_text_field( wp_unslash( $_GET['store'] ) )
+    : 'US';
 ?>
 <div class="ubo-v2-wrap ubo-alerts-wrap">
 
