@@ -271,85 +271,100 @@ $time = current_time( 'D, M j Y · g:i A' );
     function drawChart(labels, data, metric) {
         var isVal  = metric === 'value';
         var sym    = curSite === 'India' ? '₹' : '$';
-        // Light blue style matching screenshot
         var accent = '#4da6ff';
-        var aFill  = 'rgba(77,166,255,0.12)';
+        var ns     = 'http://www.w3.org/2000/svg';
 
-        var $svg    = $('#ubo-graf-svg');
-        var $yAxis  = $('#ubo-graf-y');
-        var $xAxis  = $('#ubo-graf-x');
-        var W       = $svg.parent().width();
-        var H       = 220;
-        var padL    = 0; var padR = 8; var padT = 12; var padB = 0;
-        var plotW   = W - padL - padR;
-        var plotH   = H - padT - padB;
+        var $svg   = $('#ubo-graf-svg');
+        var $yAxis = $('#ubo-graf-y');
+        var $xAxis = $('#ubo-graf-x');
+        var W      = $svg.parent().width();
+        var H      = 220;
+        var padL   = 0; var padR = 8; var padT = 16; var padB = 0;
+        var plotW  = W - padL - padR;
+        var plotH  = H - padT - padB;
+        var n      = data.length;
 
         $svg.attr({ viewBox: '0 0 ' + W + ' ' + H, width: W, height: H });
         $svg.empty(); $yAxis.empty(); $xAxis.empty();
 
-        var max = Math.max.apply(null, data) || 1;
-        var n   = data.length;
+        // Nice rounded max so y-axis ticks are clean integers
+        var rawMax   = Math.max.apply(null, data) || 1;
+        var yTicks   = 4;
+        var tickStep = Math.ceil(rawMax / yTicks) || 1;
+        var max      = tickStep * yTicks;
 
-        // Y-axis ticks (4 lines)
-        var yTicks = 4;
-        $yAxis.empty();
+        // Y-axis grid lines + labels
         for (var t = 0; t <= yTicks; t++) {
-            var val = Math.round((max / yTicks) * (yTicks - t));
-            var y   = padT + (plotH / yTicks) * t;
-            // grid line in SVG
-            var line = document.createElementNS('http://www.w3.org/2000/svg','line');
-            line.setAttribute('x1', padL); line.setAttribute('x2', W - padR);
-            line.setAttribute('y1', y);    line.setAttribute('y2', y);
-            line.setAttribute('stroke', '#e8ecf0'); line.setAttribute('stroke-width', '1');
-            $svg[0].appendChild(line);
-            // label
+            var val = tickStep * (yTicks - t);
+            var gy  = padT + (plotH / yTicks) * t;
+            var gl  = document.createElementNS(ns, 'line');
+            gl.setAttribute('x1', padL); gl.setAttribute('x2', W - padR);
+            gl.setAttribute('y1', gy);   gl.setAttribute('y2', gy);
+            gl.setAttribute('stroke', t === yTicks ? '#c8d0da' : '#edf0f4');
+            gl.setAttribute('stroke-width', '1');
+            $svg[0].appendChild(gl);
             var lbl = isVal ? sym + (val >= 1000 ? (val/1000).toFixed(1)+'k' : val) : val;
-            $yAxis.append('<div style="position:absolute;right:4px;top:' + (y - 8) + 'px;font-size:10px;color:#8792a2;white-space:nowrap;">' + lbl + '</div>');
+            $yAxis.append('<div style="position:absolute;right:4px;top:' + (gy - 8) + 'px;font-size:10px;color:#8792a2;white-space:nowrap;">' + lbl + '</div>');
         }
 
         if (n === 0) return;
 
-        // Build points
+        // Build pixel points — evenly spaced across full width
         var pts = [];
         for (var i = 0; i < n; i++) {
-            var x = padL + (n === 1 ? plotW / 2 : (plotW / (n - 1)) * i);
-            var y = padT + plotH - (data[i] / max) * plotH;
-            pts.push([x, y]);
+            var px = padL + (n === 1 ? plotW / 2 : (plotW / (n - 1)) * i);
+            var py = padT + plotH - (data[i] / max) * plotH;
+            pts.push([px, py]);
         }
 
-        // Smooth path using cubic bezier
-        function smooth(points) {
-            if (points.length < 2) return 'M' + points[0][0] + ',' + points[0][1];
-            var d = 'M' + points[0][0] + ',' + points[0][1];
-            for (var i = 0; i < points.length - 1; i++) {
-                var cp1x = points[i][0] + (points[i+1][0] - (i > 0 ? points[i-1][0] : points[i][0])) * 0.2;
-                var cp1y = points[i][1] + (points[i+1][1] - (i > 0 ? points[i-1][1] : points[i][1])) * 0.2;
-                var cp2x = points[i+1][0] - (i < points.length - 2 ? points[i+2][0] - points[i][0] : points[i+1][0] - points[i][0]) * 0.2;
-                var cp2y = points[i+1][1] - (i < points.length - 2 ? points[i+2][1] - points[i][1] : points[i+1][1] - points[i][1]) * 0.2;
-                d += ' C' + cp1x + ',' + cp1y + ' ' + cp2x + ',' + cp2y + ' ' + points[i+1][0] + ',' + points[i+1][1];
+        // Catmull-Rom → cubic bezier, tension 0.35 for smooth bell shape
+        function catmullPath(p) {
+            if (p.length < 2) return 'M' + p[0][0] + ',' + p[0][1];
+            var alpha = 0.35;
+            var d = 'M' + p[0][0] + ',' + p[0][1];
+            for (var i = 0; i < p.length - 1; i++) {
+                var p0 = p[Math.max(i-1, 0)];
+                var p1 = p[i];
+                var p2 = p[i+1];
+                var p3 = p[Math.min(i+2, p.length-1)];
+                var cp1x = p1[0] + (p2[0] - p0[0]) * alpha;
+                var cp1y = p1[1] + (p2[1] - p0[1]) * alpha;
+                var cp2x = p2[0] - (p3[0] - p1[0]) * alpha;
+                var cp2y = p2[1] - (p3[1] - p1[1]) * alpha;
+                d += ' C' + cp1x.toFixed(2) + ',' + cp1y.toFixed(2) + ' ' + cp2x.toFixed(2) + ',' + cp2y.toFixed(2) + ' ' + p2[0] + ',' + p2[1];
             }
             return d;
         }
 
-        var ns = 'http://www.w3.org/2000/svg';
-        var linePath = smooth(pts);
+        var linePath = catmullPath(pts);
         var bottom   = padT + plotH;
 
-        // Gradient fill
+        // Gradient fill — stronger at top, fades to transparent
         var defs = document.createElementNS(ns, 'defs');
         var grad = document.createElementNS(ns, 'linearGradient');
         grad.setAttribute('id', 'ubo-grad'); grad.setAttribute('x1','0'); grad.setAttribute('y1','0'); grad.setAttribute('x2','0'); grad.setAttribute('y2','1');
-        var s1 = document.createElementNS(ns,'stop'); s1.setAttribute('offset','0%');   s1.setAttribute('stop-color', accent); s1.setAttribute('stop-opacity','0.18');
-        var s2 = document.createElementNS(ns,'stop'); s2.setAttribute('offset','100%'); s2.setAttribute('stop-color', accent); s2.setAttribute('stop-opacity','0');
-        grad.appendChild(s1); grad.appendChild(s2); defs.appendChild(grad); $svg[0].appendChild(defs);
+        var s1 = document.createElementNS(ns,'stop'); s1.setAttribute('offset','0%');   s1.setAttribute('stop-color', accent); s1.setAttribute('stop-opacity','0.30');
+        var s2 = document.createElementNS(ns,'stop'); s2.setAttribute('offset','80%');  s2.setAttribute('stop-color', accent); s2.setAttribute('stop-opacity','0.06');
+        var s3 = document.createElementNS(ns,'stop'); s3.setAttribute('offset','100%'); s3.setAttribute('stop-color', accent); s3.setAttribute('stop-opacity','0');
+        grad.appendChild(s1); grad.appendChild(s2); grad.appendChild(s3);
+        defs.appendChild(grad);
+        $svg[0].appendChild(defs);
 
-        // Fill area
-        var fillPath = document.createElementNS(ns, 'path');
-        fillPath.setAttribute('d', linePath + ' L' + pts[pts.length-1][0] + ',' + bottom + ' L' + pts[0][0] + ',' + bottom + ' Z');
-        fillPath.setAttribute('fill', 'url(#ubo-grad)');
-        $svg[0].appendChild(fillPath);
+        // Crosshair vertical line (hidden until hover)
+        var xhair = document.createElementNS(ns, 'line');
+        xhair.setAttribute('y1', padT); xhair.setAttribute('y2', bottom);
+        xhair.setAttribute('stroke', '#b0b8c4'); xhair.setAttribute('stroke-width', '1');
+        xhair.setAttribute('stroke-dasharray', '3,3');
+        xhair.style.display = 'none';
+        $svg[0].appendChild(xhair);
 
-        // Line
+        // Gradient fill area
+        var fillEl = document.createElementNS(ns, 'path');
+        fillEl.setAttribute('d', linePath + ' L' + pts[n-1][0] + ',' + bottom + ' L' + pts[0][0] + ',' + bottom + ' Z');
+        fillEl.setAttribute('fill', 'url(#ubo-grad)');
+        $svg[0].appendChild(fillEl);
+
+        // Stroke line
         var lineEl = document.createElementNS(ns, 'path');
         lineEl.setAttribute('d', linePath);
         lineEl.setAttribute('fill', 'none');
@@ -359,46 +374,64 @@ $time = current_time( 'D, M j Y · g:i A' );
         lineEl.setAttribute('stroke-linecap', 'round');
         $svg[0].appendChild(lineEl);
 
-        // Dots + invisible hit areas
-        for (var i = 0; i < pts.length; i++) {
+        // Invisible hover slots — one rect per data point, full chart height
+        var slotW = n > 1 ? plotW / (n - 1) : plotW;
+        for (var i = 0; i < n; i++) {
             (function(idx, px, py) {
-                var dot = document.createElementNS(ns, 'circle');
-                dot.setAttribute('cx', px); dot.setAttribute('cy', py);
-                dot.setAttribute('r', n <= 14 ? '4' : '3');
-                dot.setAttribute('fill', '#fff');
-                dot.setAttribute('stroke', accent);
-                dot.setAttribute('stroke-width', '2');
-                $svg[0].appendChild(dot);
-
-                // Hit area
-                var hit = document.createElementNS(ns, 'circle');
-                hit.setAttribute('cx', px); hit.setAttribute('cy', py);
-                hit.setAttribute('r', '14');
+                var hit = document.createElementNS(ns, 'rect');
+                hit.setAttribute('x', Math.max(0, px - slotW / 2));
+                hit.setAttribute('y', padT);
+                hit.setAttribute('width', slotW);
+                hit.setAttribute('height', plotH);
                 hit.setAttribute('fill', 'transparent');
-                hit.setAttribute('style', 'cursor:pointer;');
-                hit.addEventListener('mouseenter', function(e) {
-                    var val = isVal ? sym + data[idx].toLocaleString() : data[idx] + ' units';
-                    var $tt = $('#ubo-graf-tooltip');
-                    $tt.html('<strong>' + labels[idx] + '</strong><br>' + val).show();
-                    var rect = $svg[0].getBoundingClientRect();
-                    var wrap = $svg.closest('.ubo-graf-plot-area')[0].getBoundingClientRect();
-                    var tx = px - wrap.left + rect.left - 40;
-                    var ty = py - wrap.top  + rect.top  - 52;
-                    $tt.css({ left: Math.max(0, tx) + 'px', top: ty + 'px' });
+                hit.setAttribute('style', 'cursor:crosshair;');
+                hit.addEventListener('mouseenter', function() {
+                    xhair.setAttribute('x1', px); xhair.setAttribute('x2', px);
+                    xhair.style.display = '';
+                    var dot = document.getElementById('ubo-hover-dot');
+                    if (!dot) {
+                        dot = document.createElementNS(ns, 'circle');
+                        dot.setAttribute('id', 'ubo-hover-dot');
+                        dot.setAttribute('r', '4');
+                        dot.setAttribute('fill', '#fff');
+                        dot.setAttribute('stroke', accent);
+                        dot.setAttribute('stroke-width', '2');
+                        $svg[0].appendChild(dot);
+                    }
+                    dot.setAttribute('cx', px); dot.setAttribute('cy', py);
+                    dot.style.display = '';
+                    var parts    = labels[idx].split('\n');
+                    var dispLbl  = parts.length > 1 ? parts[0] + ' ' + parts[1] : parts[0];
+                    var valStr   = isVal ? sym + data[idx].toLocaleString() : data[idx] + ' orders';
+                    var $tt      = $('#ubo-graf-tooltip');
+                    $tt.html('<strong>' + dispLbl + '</strong><br>' + valStr).show();
+                    var svgRect  = $svg[0].getBoundingClientRect();
+                    var wrapRect = $svg.closest('.ubo-graf-plot-area')[0].getBoundingClientRect();
+                    $tt.css({ left: Math.max(0, px + svgRect.left - wrapRect.left - 44) + 'px', top: Math.max(0, py + svgRect.top - wrapRect.top - 54) + 'px' });
                 });
-                hit.addEventListener('mouseleave', function() { $('#ubo-graf-tooltip').hide(); });
+                hit.addEventListener('mouseleave', function() {
+                    xhair.style.display = 'none';
+                    var dot = document.getElementById('ubo-hover-dot');
+                    if (dot) dot.style.display = 'none';
+                    $('#ubo-graf-tooltip').hide();
+                });
                 $svg[0].appendChild(hit);
             })(i, pts[i][0], pts[i][1]);
         }
 
-        // X-axis labels — show max 10 evenly spaced
-        var step = Math.ceil(n / 10);
+        // X-axis labels — two lines (day + month), max ~10 evenly spaced
+        var step = Math.max(1, Math.ceil(n / 10));
         for (var i = 0; i < n; i += step) {
-            var xPct = n === 1 ? 50 : (pts[i][0] - padL) / plotW * 100;
-            $xAxis.append('<span style="position:absolute;left:' + xPct + '%;transform:translateX(-50%);font-size:10px;color:#8792a2;white-space:nowrap;">' + labels[i] + '</span>');
+            var xPct  = n === 1 ? 50 : (pts[i][0] - padL) / plotW * 100;
+            var parts = labels[i].split('\n');
+            $xAxis.append(
+                '<span style="position:absolute;left:' + xPct + '%;transform:translateX(-50%);text-align:center;line-height:1.3;">'
+                + '<span style="display:block;font-size:10px;color:#3c4257;font-weight:500;">' + (parts[0]||'') + '</span>'
+                + (parts[1] ? '<span style="display:block;font-size:9px;color:#8792a2;">' + parts[1] + '</span>' : '')
+                + '</span>'
+            );
         }
     }
-
     // Store tab
     $(document).on('click', '.ubo-v2-chart-tab', function() {
         $('.ubo-v2-chart-tab').removeClass('active');

@@ -24,8 +24,8 @@ UBO_Webhook::register();
 add_action( 'admin_enqueue_scripts', 'ubo_enqueue_assets' );
 function ubo_enqueue_assets( $hook ) {
     if ( strpos( $hook, 'ubo' ) === false ) return;
-    wp_enqueue_style( 'ubo-admin', plugin_dir_url( __FILE__ ) . 'assets/ubo-admin.css', [], '1.9.3' );
-    wp_enqueue_script( 'ubo-admin', plugin_dir_url( __FILE__ ) . 'assets/ubo-admin.js', [ 'jquery' ], '1.9.3', true );
+    wp_enqueue_style( 'ubo-admin', plugin_dir_url( __FILE__ ) . 'assets/ubo-admin.css', [], '1.9.4' );
+    wp_enqueue_script( 'ubo-admin', plugin_dir_url( __FILE__ ) . 'assets/ubo-admin.js', [ 'jquery' ], '1.9.4', true );
     wp_localize_script( 'ubo-admin', 'uboAdmin', [
         'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
         'nonce'       => wp_create_nonce( 'ubo_ajax' ),
@@ -34,7 +34,7 @@ function ubo_enqueue_assets( $hook ) {
     // V2 dashboard styles
     $page = sanitize_text_field( $_GET['page'] ?? '' );
     if ( in_array( $page, [ 'ubo-dashboard', 'ubo-alerts' ], true ) ) {
-        wp_enqueue_style( 'ubo-dashboard-v2', plugin_dir_url( __FILE__ ) . 'assets/ubo-dashboard-v2.css', [], '1.0.9' );
+        wp_enqueue_style( 'ubo-dashboard-v2', plugin_dir_url( __FILE__ ) . 'assets/ubo-dashboard-v2.css', [], '1.1.0' );
     }
 }
 
@@ -239,6 +239,7 @@ function ubo_ajax_sales_chart() {
         if ( count( $batch ) < 50 ) break;
     }
 
+    // ── Aggregate orders into buckets ──
     $buckets = [];
     foreach ( $all_orders as $order ) {
         $ts  = strtotime( $order['date_created'] );
@@ -249,13 +250,36 @@ function ubo_ajax_sales_chart() {
             $buckets[ $key ]['quantity'] += (int) ( $li['quantity'] ?? 0 );
         }
     }
-    ksort( $buckets );
+
+    // ── Fill every slot in the range with 0 so the chart is continuous ──
+    $ts_from = strtotime( $d_from );
+    $ts_to   = strtotime( $d_to );
+    $full    = [];
+    if ( $group === 'day' ) {
+        for ( $t = $ts_from; $t <= $ts_to; $t = strtotime( '+1 day', $t ) ) {
+            $k = date( 'Y-m-d', $t );
+            $full[ $k ] = $buckets[ $k ] ?? [ 'quantity' => 0, 'value' => 0.0 ];
+        }
+    } else {
+        $t = $ts_from;
+        while ( $t <= $ts_to ) {
+            $k    = date( 'Y-m', $t );
+            $full[ $k ] = $buckets[ $k ] ?? [ 'quantity' => 0, 'value' => 0.0 ];
+            $t    = strtotime( '+1 month', $t );
+        }
+    }
 
     $labels = [];
     $data   = [];
-    foreach ( $buckets as $k => $v ) {
-        $labels[] = $group === 'month' ? date( 'M Y', strtotime( $k . '-01' ) ) : date( 'M j', strtotime( $k ) );
-        $data[]   = $metric === 'value' ? round( $v['value'], 2 ) : $v['quantity'];
+    foreach ( $full as $k => $v ) {
+        if ( $group === 'month' ) {
+            $labels[] = date( 'M', strtotime( $k . '-01' ) ) . "\n" . date( 'Y', strtotime( $k . '-01' ) );
+        } else {
+            // Two-line label: day number on line 1, short month on line 2
+            $ts_k     = strtotime( $k );
+            $labels[] = date( 'j', $ts_k ) . "\n" . date( 'M', $ts_k );
+        }
+        $data[] = $metric === 'value' ? round( $v['value'], 2 ) : $v['quantity'];
     }
 
     wp_send_json_success( [ 'labels' => $labels, 'data' => $data, 'metric' => $metric, 'site' => $site ] );

@@ -492,30 +492,36 @@
 .ubo-alert-badge-red   { background: #fef2f2; color: #dc2626; }
 .ubo-alert-badge-amber { background: #fffbeb; color: #b45309; }
 
-/* ── Store switcher (Alerts page) ── */
+/* ── Store switcher (Alerts page) — pill/segment style ── */
 .ubo-store-switcher {
-    display: flex;
-    gap: 0;
-    border-bottom: 2px solid #e8ecf0;
+    display: inline-flex;
+    background: #eef0f4;
+    border-radius: 10px;
+    padding: 4px;
+    gap: 3px;
     margin-bottom: 24px;
 }
 .ubo-store-tab {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 7px;
     font-size: 13px;
     font-weight: 600;
-    padding: 10px 24px;
-    background: none;
+    padding: 8px 20px;
+    background: transparent;
     border: none;
-    border-bottom: 3px solid transparent;
-    margin-bottom: -2px;
+    border-radius: 7px;
     color: #8792a2;
     cursor: pointer;
-    transition: color .15s, border-color .15s;
+    transition: background .18s, color .18s, box-shadow .18s;
+    white-space: nowrap;
 }
-.ubo-store-tab:hover { color: #3c4257; }
-.ubo-store-tab.active { color: #635bff; border-bottom-color: #635bff; }
+.ubo-store-tab:hover { color: #3c4257; background: rgba(255,255,255,.5); }
+.ubo-store-tab.active {
+    background: #fff;
+    color: #1a1f36;
+    box-shadow: 0 1px 4px rgba(0,0,0,.10), 0 0 0 1px rgba(0,0,0,.04);
+}
 .ubo-store-tab-badge {
     font-size: 10px;
     font-weight: 700;
@@ -525,7 +531,9 @@
     border-radius: 10px;
     min-width: 18px;
     text-align: center;
+    line-height: 1.6;
 }
+.ubo-store-tab.active .ubo-store-tab-badge { background: #ef4444; }
 .ubo-store-panel { display: none; }
 .ubo-store-panel.active { display: block; }
 
@@ -760,14 +768,39 @@
     box-shadow: 0 4px 12px rgba(0,0,0,.2);
 }
 
-/* ── Alerts grid (compact side-by-side boxes) ── */
+/* ── Alerts grid (equal-height side-by-side boxes) ── */
 .ubo-alerts-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 14px;
     margin-bottom: 20px;
+    align-items: stretch;
 }
-.ubo-alert-card-wrap { min-width: 0; }
+.ubo-alert-card-wrap {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+.ubo-alert-card-wrap .ubo-v2-card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+/* Empty state inside alert cards fills remaining height and centers content */
+.ubo-alert-card-wrap .ubo-v2-empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 24px 18px;
+    font-size: 12px;
+    color: #8792a2;
+}
+.ubo-alert-card-wrap .ubo-v2-empty span { font-size: 20px; line-height: 1; }
+/* Alert list also fills remaining height */
+.ubo-alert-card-wrap .ubo-alert-list { flex: 1; }
 
 /* ── Insights 3-col grid ── */
 .ubo-ins-three-col {

@@ -167,7 +167,7 @@ $active_store = in_array( sanitize_text_field( wp_unslash( $_GET['store'] ?? '' 
                         <span class="ubo-alert-badge ubo-alert-badge-red"><?php echo count( $us_out_items ); ?> items</span>
                     </div>
                     <?php if ( empty( $us_out_items ) ) : ?>
-                        <div class="ubo-v2-empty"><span style="font-size:22px;">✅</span><br>All in stock</div>
+                        <div class="ubo-v2-empty"><span>✅</span>All in stock</div>
                     <?php else : ?>
                         <div class="ubo-alert-list">
                             <?php foreach ( $us_out_items as $p ) : ?>
@@ -193,7 +193,7 @@ $active_store = in_array( sanitize_text_field( wp_unslash( $_GET['store'] ?? '' 
                         <span class="ubo-alert-badge ubo-alert-badge-amber"><?php echo count( $us_low ); ?> items</span>
                     </div>
                     <?php if ( empty( $us_low ) ) : ?>
-                        <div class="ubo-v2-empty"><span style="font-size:22px;">✅</span><br>None low</div>
+                        <div class="ubo-v2-empty"><span>✅</span>None low</div>
                     <?php else : ?>
                         <div class="ubo-alert-list">
                             <?php foreach ( $us_low as $item ) :
@@ -233,7 +233,7 @@ $active_store = in_array( sanitize_text_field( wp_unslash( $_GET['store'] ?? '' 
                         <span class="ubo-alert-badge ubo-alert-badge-red"><?php echo count( $in_out_items ); ?> items</span>
                     </div>
                     <?php if ( empty( $in_out_items ) ) : ?>
-                        <div class="ubo-v2-empty"><span style="font-size:22px;">✅</span><br>All in stock</div>
+                        <div class="ubo-v2-empty"><span>✅</span>All in stock</div>
                     <?php else : ?>
                         <div class="ubo-alert-list">
                             <?php foreach ( $in_out_items as $p ) : ?>
@@ -259,7 +259,7 @@ $active_store = in_array( sanitize_text_field( wp_unslash( $_GET['store'] ?? '' 
                         <span class="ubo-alert-badge ubo-alert-badge-amber"><?php echo count( $in_low ); ?> items</span>
                     </div>
                     <?php if ( empty( $in_low ) ) : ?>
-                        <div class="ubo-v2-empty"><span style="font-size:22px;">✅</span><br>None low</div>
+                        <div class="ubo-v2-empty"><span>✅</span>None low</div>
                     <?php else : ?>
                         <div class="ubo-alert-list">
                             <?php foreach ( $in_low as $item ) :
