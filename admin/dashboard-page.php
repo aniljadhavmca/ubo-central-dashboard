@@ -188,24 +188,31 @@ $time = current_time( 'D, M j Y · g:i A' );
     </div>
 
     <!-- ── Sales Order Summary Chart ── -->
-    <div class="ubo-v2-section-title">📈 Sales Order Summary</div>
     <div class="ubo-v2-card ubo-v2-chart-card">
-        <div class="ubo-v2-chart-toolbar">
-            <button class="ubo-v2-chart-tab active" data-site="US">🇺🇸 US</button>
-            <button class="ubo-v2-chart-tab" data-site="India">🇮🇳 India</button>
-            <span class="ubo-v2-chart-sep"></span>
-            <select id="ubo-chart-metric" class="ubo-v2-chart-sel">
-                <option value="quantity">By Quantity</option>
-                <option value="value">By Value</option>
-            </select>
-            <select id="ubo-chart-period" class="ubo-v2-chart-sel">
-                <option value="this_week">This Week</option>
-                <option value="prev_week">Previous Week</option>
-                <option value="this_month" selected>This Month</option>
-                <option value="last_quarter">Last Quarter</option>
-                <option value="this_year">This Year</option>
-                <option value="prev_year">Previous Year</option>
-            </select>
+        <div class="ubo-v2-chart-header">
+            <div class="ubo-v2-chart-title-row">
+                <span class="ubo-v2-chart-title">Sales Order Summary</span>
+                <div class="ubo-v2-chart-period-wrap">
+                    <select id="ubo-chart-period" class="ubo-v2-chart-period-sel">
+                        <option value="this_week">This Week</option>
+                        <option value="prev_week">Previous Week</option>
+                        <option value="this_month" selected>This Month</option>
+                        <option value="last_quarter">Last Quarter</option>
+                        <option value="this_year">This Year</option>
+                        <option value="prev_year">Previous Year</option>
+                    </select>
+                </div>
+            </div>
+            <div class="ubo-v2-chart-controls">
+                <div class="ubo-v2-chart-store-tabs">
+                    <button class="ubo-v2-chart-tab active" data-site="US">🇺🇸 US</button>
+                    <button class="ubo-v2-chart-tab" data-site="India">🇮🇳 India</button>
+                </div>
+                <div class="ubo-v2-metric-pills">
+                    <button class="ubo-v2-metric-pill active" data-metric="quantity">By Quantity</button>
+                    <button class="ubo-v2-metric-pill" data-metric="value">By Value</button>
+                </div>
+            </div>
         </div>
         <div class="ubo-graf-wrap">
             <div id="ubo-graf-loading" class="ubo-graf-state">Loading…</div>
@@ -235,18 +242,18 @@ $time = current_time( 'D, M j Y · g:i A' );
     });
 
     // ── Grafana-style SVG chart ──
-    var curSite = 'US';
-    var curData = { labels: [], data: [] };
+    var curSite   = 'US';
+    var curMetric = 'quantity';
+    var curData   = { labels: [], data: [] };
 
     function loadChart() {
         var period = $('#ubo-chart-period').val();
-        var metric = $('#ubo-chart-metric').val();
         $('#ubo-graf-loading').show();
         $('#ubo-graf-empty, #ubo-graf-chart').hide();
 
         $.post(uboAdmin.ajaxUrl, {
             action: 'ubo_sales_chart', nonce: uboAdmin.nonce,
-            site: curSite, period: period, metric: metric
+            site: curSite, period: period, metric: curMetric
         }, function(res) {
             $('#ubo-graf-loading').hide();
             if (!res.success || !res.data.labels.length) {
@@ -262,10 +269,11 @@ $time = current_time( 'D, M j Y · g:i A' );
     }
 
     function drawChart(labels, data, metric) {
-        var isVal   = metric === 'value';
-        var sym     = curSite === 'India' ? '₹' : '$';
-        var accent  = curSite === 'US' ? '#635bff' : '#f59e0b';
-        var aFill   = curSite === 'US' ? 'rgba(99,91,255,.08)' : 'rgba(245,158,11,.08)';
+        var isVal  = metric === 'value';
+        var sym    = curSite === 'India' ? '₹' : '$';
+        // Light blue style matching screenshot
+        var accent = '#4da6ff';
+        var aFill  = 'rgba(77,166,255,0.12)';
 
         var $svg    = $('#ubo-graf-svg');
         var $yAxis  = $('#ubo-graf-y');
@@ -398,7 +406,14 @@ $time = current_time( 'D, M j Y · g:i A' );
         curSite = $(this).data('site');
         loadChart();
     });
-    $('#ubo-chart-period, #ubo-chart-metric').on('change', loadChart);
+    // Metric pill toggle
+    $(document).on('click', '.ubo-v2-metric-pill', function() {
+        $('.ubo-v2-metric-pill').removeClass('active');
+        $(this).addClass('active');
+        curMetric = $(this).data('metric');
+        loadChart();
+    });
+    $('#ubo-chart-period').on('change', loadChart);
 
     // Redraw on resize
     var resizeTimer;

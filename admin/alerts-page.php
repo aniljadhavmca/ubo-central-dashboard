@@ -291,16 +291,14 @@ $active_store = in_array( sanitize_text_field( wp_unslash( $_GET['store'] ?? '' 
 
 <?php
 function ubo_render_insights( $ins, $prefix ) {
-    $products  = $ins['products']  ?? [];
-    $colors    = $ins['colors']    ?? [];
-    $sizes     = $ins['sizes']     ?? [];
-    $countries = $ins['countries'] ?? [];
-    $max_p = $products  ? max( array_values( $products ) )  : 1;
-    $max_c = $colors    ? max( array_values( $colors ) )    : 1;
-    $total_sz  = array_sum( $sizes )    ?: 1;
-    $total_cty = array_sum( $countries ) ?: 1;
+    $products = $ins['products'] ?? [];
+    $colors   = $ins['colors']   ?? [];
+    $sizes    = $ins['sizes']    ?? [];
+    $max_p    = $products ? max( array_values( $products ) ) : 1;
+    $max_c    = $colors   ? max( array_values( $colors ) )   : 1;
+    $total_sz = array_sum( $sizes ) ?: 1;
     ?>
-    <div class="ubo-v2-two-col" style="margin-bottom:24px;">
+    <div class="ubo-ins-three-col">
 
         <!-- Best Products -->
         <div class="ubo-v2-card">
@@ -327,7 +325,7 @@ function ubo_render_insights( $ins, $prefix ) {
             <div class="ubo-v2-card-header"><span>🎨 Best-Selling Colors</span></div>
             <div class="ubo-ins-list">
                 <?php if ( empty( $colors ) ) : ?>
-                    <div class="ubo-v2-empty">No color data — check variation attribute names include "color"</div>
+                    <div class="ubo-v2-empty" style="font-size:11px;">No color data — check variation attribute names include "color"</div>
                 <?php else : foreach ( $colors as $color => $qty ) :
                     $pct = round( ( $qty / $max_c ) * 100 ); ?>
                 <div class="ubo-ins-row">
@@ -342,15 +340,12 @@ function ubo_render_insights( $ins, $prefix ) {
             </div>
         </div>
 
-    </div>
-    <div class="ubo-v2-two-col" style="margin-bottom:24px;">
-
         <!-- Best Sizes -->
         <div class="ubo-v2-card">
             <div class="ubo-v2-card-header"><span>📐 Best-Selling Sizes</span></div>
             <div class="ubo-ins-list">
                 <?php if ( empty( $sizes ) ) : ?>
-                    <div class="ubo-v2-empty">No size data — check variation attribute names include "size"</div>
+                    <div class="ubo-v2-empty" style="font-size:11px;">No size data — check variation attribute names include "size"</div>
                 <?php else : foreach ( $sizes as $size => $qty ) :
                     $pct = round( ( $qty / $total_sz ) * 100 ); ?>
                 <div class="ubo-ins-size-row">
@@ -360,28 +355,6 @@ function ubo_render_insights( $ins, $prefix ) {
                     </div>
                     <span class="ubo-ins-size-pct"><?php echo $pct; ?>%</span>
                     <span class="ubo-v2-rank-badge" style="background:#f0fdf4;color:#166534;"><?php echo $qty; ?></span>
-                </div>
-                <?php endforeach; endif; ?>
-            </div>
-        </div>
-
-        <!-- Orders by Country -->
-        <div class="ubo-v2-card">
-            <div class="ubo-v2-card-header"><span>🌍 Orders by Country</span></div>
-            <div class="ubo-ins-list">
-                <?php if ( empty( $countries ) ) : ?>
-                    <div class="ubo-v2-empty">No country data available</div>
-                <?php else : foreach ( $countries as $code => $count ) :
-                    $pct  = round( ( $count / $total_cty ) * 100 );
-                    $flag = ubo_country_flag( (string) $code );
-                ?>
-                <div class="ubo-ins-row">
-                    <span class="ubo-ins-flag"><?php echo $flag; ?></span>
-                    <div class="ubo-ins-info">
-                        <div class="ubo-ins-name"><?php echo esc_html( $code ); ?> <span style="color:#8792a2;font-size:11px;"><?php echo $pct; ?>%</span></div>
-                        <div class="ubo-ins-bar-wrap"><div class="ubo-ins-bar-fill ubo-ins-bar-blue" style="width:<?php echo $pct; ?>%;"></div></div>
-                    </div>
-                    <span class="ubo-v2-rank-badge" style="background:#eff6ff;color:#1d4ed8;"><?php echo $count; ?> orders</span>
                 </div>
                 <?php endforeach; endif; ?>
             </div>
