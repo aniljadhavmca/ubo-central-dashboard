@@ -493,12 +493,18 @@
 
 /* ── Store switcher (Alerts page) — pill/segment style ── */
 .ubo-store-switcher {
-    display: inline-flex;
-    background: #eef0f4;
-    border-radius: 10px;
-    padding: 4px;
-    gap: 3px;
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid #e8ecf0;
     margin-bottom: 24px;
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+}
+.ubo-store-switcher::after {
+    content: '';
+    flex: 1;
+    border-bottom: none;
 }
 .ubo-store-tab {
     display: flex;
@@ -506,20 +512,23 @@
     gap: 7px;
     font-size: 13px;
     font-weight: 600;
-    padding: 8px 20px;
+    padding: 10px 24px;
     background: transparent;
     border: none;
-    border-radius: 7px;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    border-radius: 0;
     color: #8792a2;
     cursor: pointer;
-    transition: background .18s, color .18s, box-shadow .18s;
+    transition: color .15s, border-color .15s;
     white-space: nowrap;
 }
-.ubo-store-tab:hover { color: #3c4257; background: rgba(255,255,255,.5); }
+.ubo-store-tab:hover { color: #3c4257; background: transparent; }
 .ubo-store-tab.active {
-    background: #fff;
+    background: transparent;
     color: #1a1f36;
-    box-shadow: 0 1px 4px rgba(0,0,0,.10), 0 0 0 1px rgba(0,0,0,.04);
+    border-bottom-color: #635bff;
+    box-shadow: none;
 }
 .ubo-store-tab-badge {
     font-size: 10px;

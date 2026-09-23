@@ -34,7 +34,7 @@ function ubo_enqueue_assets( $hook ) {
     // V2 dashboard styles
     $page = sanitize_text_field( $_GET['page'] ?? '' );
     if ( in_array( $page, [ 'ubo-dashboard', 'ubo-alerts' ], true ) ) {
-        wp_enqueue_style( 'ubo-dashboard-v2', plugin_dir_url( __FILE__ ) . 'assets/ubo-dashboard-v2.css', [], '1.1.1' );
+        wp_enqueue_style( 'ubo-dashboard-v2', plugin_dir_url( __FILE__ ) . 'assets/ubo-dashboard-v2.css', [], '1.1.2' );
     }
 }
 
