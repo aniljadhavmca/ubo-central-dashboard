@@ -193,7 +193,7 @@ $time = current_time( 'D, M j Y · g:i A' );
         <div class="ubo-v2-chart-toolbar">
             <button class="ubo-v2-chart-tab active" data-site="US">🇺🇸 US</button>
             <button class="ubo-v2-chart-tab" data-site="India">🇮🇳 India</button>
-            <div class="ubo-v2-chart-sep"></div>
+            <span class="ubo-v2-chart-sep"></span>
             <select id="ubo-chart-metric" class="ubo-v2-chart-sel">
                 <option value="quantity">By Quantity</option>
                 <option value="value">By Value</option>
@@ -209,18 +209,17 @@ $time = current_time( 'D, M j Y · g:i A' );
         </div>
         <div class="ubo-v2-chart-wrap">
             <canvas id="ubo-sales-chart"></canvas>
-            <div id="ubo-chart-loading" class="ubo-v2-chart-overlay">⏳ Loading chart…</div>
+            <div id="ubo-chart-loading" class="ubo-v2-chart-overlay">Loading chart…</div>
             <div id="ubo-chart-empty" class="ubo-v2-chart-overlay" style="display:none;">No order data for this period.</div>
         </div>
     </div>
 
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script>
 (function($) {
     // ── Rank tab switcher ──
-    $('.ubo-v2-rank-tabs').on('click', '.ubo-v2-tab', function() {
+    $(document).on('click', '.ubo-v2-rank-tabs .ubo-v2-tab', function() {
         var $card = $(this).closest('.ubo-v2-card');
         $card.find('.ubo-v2-tab').removeClass('active');
         $card.find('.ubo-v2-tab-panel').removeClass('active');
@@ -233,24 +232,27 @@ $time = current_time( 'D, M j Y · g:i A' );
     var curSite   = 'US';
 
     function loadChart() {
-        var period  = $('#ubo-chart-period').val();
-        var metric  = $('#ubo-chart-metric').val();
-        var $canvas = $('#ubo-sales-chart');
+        if ( typeof Chart === 'undefined' ) {
+            setTimeout( loadChart, 100 );
+            return;
+        }
+        var period = $('#ubo-chart-period').val();
+        var metric = $('#ubo-chart-metric').val();
 
-        $('#ubo-chart-loading').show();
+        $('#ubo-chart-loading').css('display','flex');
         $('#ubo-chart-empty').hide();
         if ( chartInst ) { chartInst.destroy(); chartInst = null; }
 
-        $.post(uboAdmin.ajaxUrl, {
+        $.post( uboAdmin.ajaxUrl, {
             action : 'ubo_sales_chart',
             nonce  : uboAdmin.nonce,
             site   : curSite,
             period : period,
             metric : metric
-        }, function(res) {
+        }, function( res ) {
             $('#ubo-chart-loading').hide();
             if ( ! res.success || ! res.data.labels.length ) {
-                $('#ubo-chart-empty').show();
+                $('#ubo-chart-empty').css('display','flex');
                 return;
             }
             var labels   = res.data.labels;
@@ -258,14 +260,13 @@ $time = current_time( 'D, M j Y · g:i A' );
             var isVal    = res.data.metric === 'value';
             var accent   = curSite === 'US' ? '#635bff' : '#f59e0b';
             var accentBg = curSite === 'US' ? 'rgba(99,91,255,.15)' : 'rgba(245,158,11,.15)';
-            var cur      = curSite === 'India' ? '₹' : '$';
+            var sym      = curSite === 'India' ? '₹' : '$';
 
-            chartInst = new Chart($canvas[0].getContext('2d'), {
+            chartInst = new Chart( document.getElementById('ubo-sales-chart'), {
                 type: 'bar',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: isVal ? 'Revenue' : 'Units Sold',
                         data: data,
                         backgroundColor: accentBg,
                         borderColor: accent,
@@ -282,7 +283,7 @@ $time = current_time( 'D, M j Y · g:i A' );
                         tooltip: {
                             callbacks: {
                                 label: function(c) {
-                                    return isVal ? cur + c.parsed.y.toLocaleString() : c.parsed.y + ' units';
+                                    return isVal ? sym + c.parsed.y.toLocaleString() : c.parsed.y + ' units';
                                 }
                             }
                         }
@@ -294,15 +295,15 @@ $time = current_time( 'D, M j Y · g:i A' );
                             grid: { color: '#f0f3f6' },
                             ticks: {
                                 font: { size: 11 }, color: '#8792a2',
-                                callback: function(v) { return isVal ? cur + v.toLocaleString() : v; }
+                                callback: function(v) { return isVal ? sym + v.toLocaleString() : v; }
                             }
                         }
                     }
                 }
             });
-        }, 'json').fail(function() {
+        }, 'json' ).fail(function() {
             $('#ubo-chart-loading').hide();
-            $('#ubo-chart-empty').show();
+            $('#ubo-chart-empty').css('display','flex');
         });
     }
 
@@ -315,6 +316,8 @@ $time = current_time( 'D, M j Y · g:i A' );
 
     $('#ubo-chart-period, #ubo-chart-metric').on('change', loadChart);
 
-    loadChart();
+    // Wait for Chart.js to be ready before first load
+    $(window).on('load', loadChart);
+
 })(jQuery);
 </script>
