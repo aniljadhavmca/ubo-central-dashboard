@@ -385,15 +385,13 @@
 .ubo-v2-chart-toolbar {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 14px 18px;
+    gap: 8px;
+    padding: 12px 18px;
     border-bottom: 1px solid #f0f3f6;
     flex-wrap: wrap;
-    gap: 10px;
 }
-.ubo-v2-chart-store-tabs {
-    display: flex;
-    gap: 4px;
+.ubo-v2-chart-sep {
+    flex: 1;
 }
 .ubo-v2-chart-tab {
     font-size: 12px;
@@ -404,34 +402,39 @@
     background: #fff;
     color: #8792a2;
     cursor: pointer;
+    line-height: 1.4;
     transition: all .15s;
 }
-.ubo-v2-chart-tab:hover { background: #f6f8fa; color: #3c4257; }
+.ubo-v2-chart-tab:hover { background: #f6f8fa; color: #3c4257; border-color: #c9d2dc; }
 .ubo-v2-chart-tab.active { background: #635bff; border-color: #635bff; color: #fff; font-weight: 600; }
-.ubo-v2-chart-controls {
-    display: flex;
-    gap: 8px;
-}
-.ubo-v2-chart-select {
+.ubo-v2-wrap select.ubo-v2-chart-sel {
     font-size: 12px;
-    font-family: inherit;
-    padding: 5px 10px;
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-weight: 500;
+    padding: 5px 28px 5px 10px;
+    height: 30px;
     border: 1px solid #e8ecf0;
     border-radius: 6px;
     background: #fff;
     color: #3c4257;
     cursor: pointer;
     outline: none;
+    box-shadow: none;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238792a2'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 9px center;
 }
-.ubo-v2-chart-select:focus { border-color: #635bff; }
+.ubo-v2-wrap select.ubo-v2-chart-sel:focus { border-color: #635bff; }
 .ubo-v2-chart-wrap {
     position: relative;
     height: 280px;
     padding: 16px 18px 12px;
+    box-sizing: border-box;
 }
-.ubo-v2-chart-wrap canvas { width: 100% !important; height: 100% !important; }
-.ubo-v2-chart-loading,
-.ubo-v2-chart-empty {
+.ubo-v2-chart-wrap canvas { display: block; width: 100% !important; height: 100% !important; }
+.ubo-v2-chart-overlay {
     position: absolute;
     inset: 0;
     display: flex;
@@ -439,7 +442,8 @@
     justify-content: center;
     font-size: 12px;
     color: #8792a2;
-    background: rgba(255,255,255,.85);
+    background: rgba(255,255,255,.9);
+    pointer-events: none;
 }
 
 /* ── Responsive ── */

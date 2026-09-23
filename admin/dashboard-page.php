@@ -10,15 +10,6 @@ $us_stocked    = UBO_Orders::get_top_stocked( 'US',    5 );
 $india_stocked = UBO_Orders::get_top_stocked( 'India', 5 );
 
 $time = current_time( 'D, M j Y · g:i A' );
-
-$status_meta = [
-    'pending'    => [ 'label' => 'Pending',    'color' => '#f59e0b', 'bg' => '#fffbeb' ],
-    'processing' => [ 'label' => 'Processing', 'color' => '#3b82f6', 'bg' => '#eff6ff' ],
-    'on-hold'    => [ 'label' => 'On Hold',    'color' => '#8b5cf6', 'bg' => '#f5f3ff' ],
-    'completed'  => [ 'label' => 'Completed',  'color' => '#10b981', 'bg' => '#ecfdf5' ],
-    'cancelled'  => [ 'label' => 'Cancelled',  'color' => '#ef4444', 'bg' => '#fef2f2' ],
-    'refunded'   => [ 'label' => 'Refunded',   'color' => '#f97316', 'bg' => '#fff7ed' ],
-];
 ?>
 <div class="ubo-v2-wrap">
 
@@ -196,76 +187,30 @@ $status_meta = [
 
     </div>
 
-    <!-- ── Recent Orders ── -->
-    <div class="ubo-v2-section-title">🧾 Recent Orders</div>
-    <div class="ubo-v2-two-col">
-        <?php foreach ( [ 'US' => [ $us, '🇺🇸', '$' ], 'India' => [ $india, '🇮🇳', '₹' ] ] as $key => [ $data, $flag, $cur ] ) : ?>
-        <div class="ubo-v2-card">
-            <div class="ubo-v2-card-header">
-                <span><?php echo $flag; ?> <?php echo esc_html( $key ); ?> Store</span>
-                <a href="<?php echo esc_url( admin_url('admin.php?page=ubo-orders&site=' . $key) ); ?>" class="ubo-v2-view-all">View all →</a>
-            </div>
-            <?php if ( empty( $data['recent_orders'] ) ) : ?>
-                <div class="ubo-v2-empty">No recent orders or API not configured.</div>
-            <?php else : ?>
-            <table class="ubo-v2-table">
-                <thead>
-                    <tr><th>Order</th><th>Customer</th><th>Status</th><th>Total</th><th>Date</th></tr>
-                </thead>
-                <tbody>
-                <?php foreach ( $data['recent_orders'] as $order ) :
-                    $billing = $order['billing'] ?? [];
-                    $name    = trim( ( $billing['first_name'] ?? '' ) . ' ' . ( $billing['last_name'] ?? '' ) ) ?: 'Guest';
-                    $status  = $order['status'] ?? 'unknown';
-                    $meta    = $status_meta[ $status ] ?? [ 'label' => ucfirst( $status ), 'color' => '#64748b', 'bg' => '#f8fafc' ];
-                    $date    = date( 'M j', strtotime( $order['date_created'] ) );
-                ?>
-                    <tr>
-                        <td><span class="ubo-v2-order-num">#<?php echo esc_html( $order['number'] ); ?></span></td>
-                        <td class="ubo-v2-customer"><?php echo esc_html( $name ); ?></td>
-                        <td>
-                            <span class="ubo-v2-status-pill" style="color:<?php echo esc_attr( $meta['color'] ); ?>;background:<?php echo esc_attr( $meta['bg'] ); ?>;">
-                                <?php echo esc_html( $meta['label'] ); ?>
-                            </span>
-                        </td>
-                        <td class="ubo-v2-total"><?php echo esc_html( $cur . $order['total'] ); ?></td>
-                        <td class="ubo-v2-date"><?php echo esc_html( $date ); ?></td>
-                    </tr>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
-            <?php endif; ?>
-        </div>
-        <?php endforeach; ?>
-    </div>
-
     <!-- ── Sales Order Summary Chart ── -->
     <div class="ubo-v2-section-title">📈 Sales Order Summary</div>
     <div class="ubo-v2-card ubo-v2-chart-card">
         <div class="ubo-v2-chart-toolbar">
-            <div class="ubo-v2-chart-store-tabs">
-                <button class="ubo-v2-chart-tab active" data-site="US">🇺🇸 US</button>
-                <button class="ubo-v2-chart-tab" data-site="India">🇮🇳 India</button>
-            </div>
-            <div class="ubo-v2-chart-controls">
-                <select id="ubo-chart-metric" class="ubo-v2-chart-select">
-                    <option value="quantity">By Quantity</option>
-                    <option value="value">By Value</option>
-                </select>
-                <select id="ubo-chart-period" class="ubo-v2-chart-select">
-                    <option value="this_week">This Week</option>
-                    <option value="prev_week">Previous Week</option>
-                    <option value="this_month" selected>This Month</option>
-                    <option value="last_quarter">Last Quarter</option>
-                    <option value="this_year">This Year</option>
-                    <option value="prev_year">Previous Year</option>
-                </select>
-            </div>
+            <button class="ubo-v2-chart-tab active" data-site="US">🇺🇸 US</button>
+            <button class="ubo-v2-chart-tab" data-site="India">🇮🇳 India</button>
+            <div class="ubo-v2-chart-sep"></div>
+            <select id="ubo-chart-metric" class="ubo-v2-chart-sel">
+                <option value="quantity">By Quantity</option>
+                <option value="value">By Value</option>
+            </select>
+            <select id="ubo-chart-period" class="ubo-v2-chart-sel">
+                <option value="this_week">This Week</option>
+                <option value="prev_week">Previous Week</option>
+                <option value="this_month" selected>This Month</option>
+                <option value="last_quarter">Last Quarter</option>
+                <option value="this_year">This Year</option>
+                <option value="prev_year">Previous Year</option>
+            </select>
         </div>
         <div class="ubo-v2-chart-wrap">
             <canvas id="ubo-sales-chart"></canvas>
-            <div id="ubo-chart-loading" class="ubo-v2-chart-loading">Loading chart…</div>
-            <div id="ubo-chart-empty" class="ubo-v2-chart-empty" style="display:none;">No order data for this period.</div>
+            <div id="ubo-chart-loading" class="ubo-v2-chart-overlay">⏳ Loading chart…</div>
+            <div id="ubo-chart-empty" class="ubo-v2-chart-overlay" style="display:none;">No order data for this period.</div>
         </div>
     </div>
 
@@ -273,126 +218,103 @@ $status_meta = [
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script>
-(function() {
-    // ── Tab switcher (no-jerk: visibility swap, not display) ──
-    document.querySelectorAll('.ubo-v2-rank-tabs').forEach(function(tabs) {
-        tabs.querySelectorAll('.ubo-v2-tab').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                var card = btn.closest('.ubo-v2-card');
-                card.querySelectorAll('.ubo-v2-tab').forEach(function(b) { b.classList.remove('active'); });
-                card.querySelectorAll('.ubo-v2-tab-panel').forEach(function(p) { p.classList.remove('active'); });
-                btn.classList.add('active');
-                document.getElementById(btn.dataset.target).classList.add('active');
-            });
-        });
+(function($) {
+    // ── Rank tab switcher ──
+    $('.ubo-v2-rank-tabs').on('click', '.ubo-v2-tab', function() {
+        var $card = $(this).closest('.ubo-v2-card');
+        $card.find('.ubo-v2-tab').removeClass('active');
+        $card.find('.ubo-v2-tab-panel').removeClass('active');
+        $(this).addClass('active');
+        $('#' + $(this).data('target')).addClass('active');
     });
 
     // ── Sales Chart ──
-    var chartInstance = null;
-    var currentSite   = 'US';
+    var chartInst = null;
+    var curSite   = 'US';
 
     function loadChart() {
-        var period = document.getElementById('ubo-chart-period').value;
-        var metric = document.getElementById('ubo-chart-metric').value;
-        var loading = document.getElementById('ubo-chart-loading');
-        var empty   = document.getElementById('ubo-chart-empty');
+        var period  = $('#ubo-chart-period').val();
+        var metric  = $('#ubo-chart-metric').val();
+        var $canvas = $('#ubo-sales-chart');
 
-        loading.style.display = 'flex';
-        empty.style.display   = 'none';
-        if ( chartInstance ) { chartInstance.destroy(); chartInstance = null; }
+        $('#ubo-chart-loading').show();
+        $('#ubo-chart-empty').hide();
+        if ( chartInst ) { chartInst.destroy(); chartInst = null; }
 
-        var fd = new FormData();
-        fd.append('action',  'ubo_sales_chart');
-        fd.append('nonce',   uboAdmin.nonce);
-        fd.append('site',    currentSite);
-        fd.append('period',  period);
-        fd.append('metric',  metric);
+        $.post(uboAdmin.ajaxUrl, {
+            action : 'ubo_sales_chart',
+            nonce  : uboAdmin.nonce,
+            site   : curSite,
+            period : period,
+            metric : metric
+        }, function(res) {
+            $('#ubo-chart-loading').hide();
+            if ( ! res.success || ! res.data.labels.length ) {
+                $('#ubo-chart-empty').show();
+                return;
+            }
+            var labels   = res.data.labels;
+            var data     = res.data.data;
+            var isVal    = res.data.metric === 'value';
+            var accent   = curSite === 'US' ? '#635bff' : '#f59e0b';
+            var accentBg = curSite === 'US' ? 'rgba(99,91,255,.15)' : 'rgba(245,158,11,.15)';
+            var cur      = curSite === 'India' ? '₹' : '$';
 
-        fetch(uboAdmin.ajaxUrl, { method: 'POST', body: fd })
-            .then(function(r) { return r.json(); })
-            .then(function(res) {
-                loading.style.display = 'none';
-                if ( ! res.success || ! res.data.labels.length ) {
-                    empty.style.display = 'flex';
-                    return;
-                }
-                var labels = res.data.labels;
-                var data   = res.data.data;
-                var isVal  = res.data.metric === 'value';
-                var accent = currentSite === 'US' ? '#635bff' : '#f59e0b';
-                var accentBg = currentSite === 'US' ? 'rgba(99,91,255,.12)' : 'rgba(245,158,11,.12)';
-
-                var ctx = document.getElementById('ubo-sales-chart').getContext('2d');
-                chartInstance = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: isVal ? 'Revenue' : 'Units Sold',
-                            data: data,
-                            backgroundColor: accentBg,
-                            borderColor: accent,
-                            borderWidth: 2,
-                            borderRadius: 5,
-                            borderSkipped: false,
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(ctx) {
-                                        var v = ctx.parsed.y;
-                                        return isVal
-                                            ? (currentSite === 'India' ? '₹' : '$') + v.toLocaleString()
-                                            : v + ' units';
-                                    }
-                                }
-                            }
-                        },
-                        scales: {
-                            x: {
-                                grid: { display: false },
-                                ticks: { font: { size: 11 }, color: '#8792a2' }
-                            },
-                            y: {
-                                beginAtZero: true,
-                                grid: { color: '#f0f3f6' },
-                                ticks: {
-                                    font: { size: 11 },
-                                    color: '#8792a2',
-                                    callback: function(v) {
-                                        return isVal ? (currentSite === 'India' ? '₹' : '$') + v.toLocaleString() : v;
-                                    }
+            chartInst = new Chart($canvas[0].getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: isVal ? 'Revenue' : 'Units Sold',
+                        data: data,
+                        backgroundColor: accentBg,
+                        borderColor: accent,
+                        borderWidth: 2,
+                        borderRadius: 5,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(c) {
+                                    return isVal ? cur + c.parsed.y.toLocaleString() : c.parsed.y + ' units';
                                 }
                             }
                         }
+                    },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#8792a2' } },
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#f0f3f6' },
+                            ticks: {
+                                font: { size: 11 }, color: '#8792a2',
+                                callback: function(v) { return isVal ? cur + v.toLocaleString() : v; }
+                            }
+                        }
                     }
-                });
-            })
-            .catch(function() {
-                loading.style.display = 'none';
-                empty.style.display   = 'flex';
+                }
             });
+        }, 'json').fail(function() {
+            $('#ubo-chart-loading').hide();
+            $('#ubo-chart-empty').show();
+        });
     }
 
-    // Store tab switch
-    document.querySelectorAll('.ubo-v2-chart-tab').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('.ubo-v2-chart-tab').forEach(function(b) { b.classList.remove('active'); });
-            btn.classList.add('active');
-            currentSite = btn.dataset.site;
-            loadChart();
-        });
+    $(document).on('click', '.ubo-v2-chart-tab', function() {
+        $('.ubo-v2-chart-tab').removeClass('active');
+        $(this).addClass('active');
+        curSite = $(this).data('site');
+        loadChart();
     });
 
-    document.getElementById('ubo-chart-period').addEventListener('change', loadChart);
-    document.getElementById('ubo-chart-metric').addEventListener('change', loadChart);
+    $('#ubo-chart-period, #ubo-chart-metric').on('change', loadChart);
 
-    // Initial load
     loadChart();
-})();
+})(jQuery);
 </script>
