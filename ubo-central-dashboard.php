@@ -34,7 +34,7 @@ function ubo_enqueue_assets( $hook ) {
     // V2 dashboard styles
     $page = sanitize_text_field( $_GET['page'] ?? '' );
     if ( in_array( $page, [ 'ubo-dashboard', 'ubo-alerts' ], true ) ) {
-        wp_enqueue_style( 'ubo-dashboard-v2', plugin_dir_url( __FILE__ ) . 'assets/ubo-dashboard-v2.css', [], '1.0.6' );
+        wp_enqueue_style( 'ubo-dashboard-v2', plugin_dir_url( __FILE__ ) . 'assets/ubo-dashboard-v2.css', [], '1.0.7' );
     }
     if ( $page === 'ubo-dashboard' ) {
         wp_enqueue_script( 'chartjs', 'https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js', [], null, true );
@@ -139,27 +139,24 @@ function ubo_ajax_save_reserved() {
         wp_send_json_error( [ 'message' => 'Invalid input.' ] );
     }
 
-    // 1. Save reserved qty to local DB
+    // 1. Save reserved qty to local DB only — do NOT push to WC stock_quantity
+    // WooCommerce manages stock_quantity itself (reduces on orders). We track
+    // reserved separately and compute available = stock - reserved client-side.
     UBO_Reserved::set( $sku, $site, $qty );
 
-    // 2. Fetch current stock from WC and push available = stock - reserved back to WC
+    // 2. Fetch current WC stock so JS can recalculate the Available cell
     $sites  = UBO_Orders::get_sites();
     $s      = $sites[ $site ] ?? null;
-    $avail  = null;
+    $stock  = null;
 
     if ( $s && ! empty( $s['url'] ) ) {
         $client   = new UBO_API_Client( $s['url'], $s['ck'], $s['cs'] );
         $products = $client->get( 'products', [ 'sku' => $sku, 'per_page' => 5 ] );
 
         if ( is_array( $products ) && ! isset( $products['error'] ) && ! empty( $products ) ) {
-            // Find exact SKU match — could be simple product or variation
-            $target_endpoint = null;
-            $stock_qty       = 0;
-
             foreach ( $products as $p ) {
                 if ( $p['sku'] === $sku ) {
-                    $target_endpoint = 'products/' . (int) $p['id'];
-                    $stock_qty       = (int) ( $p['stock_quantity'] ?? 0 );
+                    $stock = (int) ( $p['stock_quantity'] ?? 0 );
                     break;
                 }
                 if ( $p['type'] === 'variable' ) {
@@ -167,27 +164,18 @@ function ubo_ajax_save_reserved() {
                     if ( is_array( $vars ) ) {
                         foreach ( $vars as $v ) {
                             if ( $v['sku'] === $sku ) {
-                                $target_endpoint = 'products/' . (int) $p['id'] . '/variations/' . (int) $v['id'];
-                                $stock_qty       = (int) ( $v['stock_quantity'] ?? 0 );
+                                $stock = (int) ( $v['stock_quantity'] ?? 0 );
                                 break 2;
                             }
                         }
                     }
                 }
             }
-
-            if ( $target_endpoint ) {
-                $avail = max( 0, $stock_qty - $qty );
-                // Push available stock back to WC so the live store reflects reserved units
-                $client->put( $target_endpoint, [
-                    'stock_quantity' => $avail,
-                    'manage_stock'   => true,
-                ] );
-            }
         }
     }
 
-    wp_send_json_success( [ 'reserved' => $qty, 'available' => $avail ] );
+    $avail = $stock !== null ? max( 0, $stock - $qty ) : null;
+    wp_send_json_success( [ 'reserved' => $qty, 'available' => $avail, 'stock' => $stock ] );
 }
 
 // AJAX: sales chart data by period

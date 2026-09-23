@@ -491,7 +491,45 @@
 .ubo-alert-badge-red   { background: #fef2f2; color: #dc2626; }
 .ubo-alert-badge-amber { background: #fffbeb; color: #b45309; }
 
-/* Insights rows */
+/* ── Store switcher (Alerts page) ── */
+.ubo-store-switcher {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid #e8ecf0;
+    margin-bottom: 24px;
+}
+.ubo-store-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 24px;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    color: #8792a2;
+    cursor: pointer;
+    transition: color .15s, border-color .15s;
+}
+.ubo-store-tab:hover { color: #3c4257; }
+.ubo-store-tab.active { color: #635bff; border-bottom-color: #635bff; }
+.ubo-store-tab-badge {
+    font-size: 10px;
+    font-weight: 700;
+    background: #ef4444;
+    color: #fff;
+    padding: 1px 6px;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
+}
+.ubo-store-panel { display: none; }
+.ubo-store-panel.active { display: block; }
+
+/* Insights list padding */
+.ubo-ins-list { padding: 8px 18px 12px; }
 .ubo-ins-row {
     display: flex;
     align-items: center;
@@ -622,7 +660,13 @@
     padding: 16px 18px 12px;
     box-sizing: border-box;
 }
-.ubo-v2-chart-wrap canvas { display: block; width: 100% !important; height: 100% !important; }
+.ubo-v2-chart-wrap canvas {
+    display: block;
+    position: absolute;
+    top: 16px; left: 18px; right: 18px; bottom: 12px;
+    width: calc(100% - 36px) !important;
+    height: calc(100% - 28px) !important;
+}
 .ubo-v2-chart-overlay {
     position: absolute;
     inset: 0;
