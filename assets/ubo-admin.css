@@ -659,3 +659,27 @@
     line-height: 1.6;
     white-space: nowrap;
 }
+
+/* ── Product thumbnails ── */
+.ubo-thumb {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    object-fit: cover;
+    background: #f0f3f6;
+    flex-shrink: 0;
+    display: inline-block;
+    vertical-align: middle;
+}
+.ubo-thumb-placeholder {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    border: 1px solid #e8ecf0;
+}
+.ubo-product-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}

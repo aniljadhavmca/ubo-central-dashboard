@@ -103,6 +103,7 @@ $time = current_time( 'D, M j Y · g:i A' );
                         <?php foreach ( $us_sellers as $i => $item ) : ?>
                         <div class="ubo-v2-rank-row">
                             <span class="ubo-v2-rank-num"><?php echo $i + 1; ?></span>
+                            <?php echo ubo_thumb( $item['image'] ?? '', 28, $item['name'] ?? '' ); ?>
                             <div class="ubo-v2-rank-info">
                                 <div class="ubo-v2-rank-name"><?php echo esc_html( $item['name'] ?? 'Product #' . $item['product_id'] ); ?></div>
                                 <div class="ubo-v2-rank-meta">ID: <?php echo esc_html( $item['product_id'] ); ?></div>
@@ -119,6 +120,7 @@ $time = current_time( 'D, M j Y · g:i A' );
                         <?php foreach ( $india_sellers as $i => $item ) : ?>
                         <div class="ubo-v2-rank-row">
                             <span class="ubo-v2-rank-num"><?php echo $i + 1; ?></span>
+                            <?php echo ubo_thumb( $item['image'] ?? '', 28, $item['name'] ?? '' ); ?>
                             <div class="ubo-v2-rank-info">
                                 <div class="ubo-v2-rank-name"><?php echo esc_html( $item['name'] ?? 'Product #' . $item['product_id'] ); ?></div>
                                 <div class="ubo-v2-rank-meta">ID: <?php echo esc_html( $item['product_id'] ); ?></div>
@@ -152,6 +154,7 @@ $time = current_time( 'D, M j Y · g:i A' );
                     ?>
                         <div class="ubo-v2-rank-row">
                             <span class="ubo-v2-rank-num"><?php echo $i + 1; ?></span>
+                            <?php echo ubo_thumb( $p['images'][0]['src'] ?? '', 28, $p['name'] ); ?>
                             <div class="ubo-v2-rank-info" style="flex:1;">
                                 <div class="ubo-v2-rank-name"><?php echo esc_html( $p['name'] ); ?></div>
                                 <div class="ubo-v2-stock-bar-wrap">
@@ -173,6 +176,7 @@ $time = current_time( 'D, M j Y · g:i A' );
                     ?>
                         <div class="ubo-v2-rank-row">
                             <span class="ubo-v2-rank-num"><?php echo $i + 1; ?></span>
+                            <?php echo ubo_thumb( $p['images'][0]['src'] ?? '', 28, $p['name'] ); ?>
                             <div class="ubo-v2-rank-info" style="flex:1;">
                                 <div class="ubo-v2-rank-name"><?php echo esc_html( $p['name'] ); ?></div>
                                 <div class="ubo-v2-stock-bar-wrap">

@@ -145,13 +145,18 @@ if ( ! function_exists( 'ubo_inv_badge' ) ) {
                             <?php endif; ?>
                         </td>
                         <td>
-                            <div class="ubo-product-name">
-                                <?php echo esc_html( $product['name'] ); ?>
-                                <?php if ( ! empty( $product['sku'] ) && isset( $adjusted_skus[ $product['sku'] ] ) ) : ?>
-                                    <span class="ubo-adjusted-tag">adjusted</span>
-                                <?php endif; ?>
+                            <div class="ubo-product-name-cell">
+                                <?php echo ubo_thumb( $product['images'][0]['src'] ?? '', 32, $product['name'] ); ?>
+                                <div>
+                                    <div class="ubo-product-name">
+                                        <?php echo esc_html( $product['name'] ); ?>
+                                        <?php if ( ! empty( $product['sku'] ) && isset( $adjusted_skus[ $product['sku'] ] ) ) : ?>
+                                            <span class="ubo-adjusted-tag">adjusted</span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div style="font-size:11px;color:#94a3b8;">ID: <?php echo $pid; ?></div>
+                                </div>
                             </div>
-                            <div style="font-size:11px;color:#94a3b8;">ID: <?php echo $pid; ?></div>
                         </td>
                         <td><span class="ubo-sku-code"><?php echo esc_html( $product['sku'] ?: '—' ); ?></span></td>
                         <td><span class="ubo-type-tag ubo-type-<?php echo esc_attr( $product['type'] ); ?>"><?php echo esc_html( $product['type'] ); ?></span></td>

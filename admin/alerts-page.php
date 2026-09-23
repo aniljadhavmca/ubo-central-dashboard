@@ -38,13 +38,13 @@ if ( ! function_exists( 'ubo_alert_low_stock' ) ) {
                     $qty = (int)( $v['stock_quantity'] ?? 0 );
                     if ( $qty > 0 && $qty <= $threshold ) {
                         $attrs = implode( ' / ', array_map( fn($a) => $a['option'], $v['attributes'] ?? [] ) );
-                        $low[] = [ 'name' => $p['name'] . ( $attrs ? ' — ' . $attrs : '' ), 'sku' => $v['sku'] ?? '', 'qty' => $qty ];
+                        $low[] = [ 'name' => $p['name'] . ( $attrs ? ' — ' . $attrs : '' ), 'sku' => $v['sku'] ?? '', 'qty' => $qty, 'image' => $p['images'][0]['src'] ?? '' ];
                     }
                 }
             } else {
                 $qty = (int)( $p['stock_quantity'] ?? 0 );
                 if ( $qty > 0 && $qty <= $threshold )
-                    $low[] = [ 'name' => $p['name'], 'sku' => $p['sku'] ?? '', 'qty' => $qty ];
+                    $low[] = [ 'name' => $p['name'], 'sku' => $p['sku'] ?? '', 'qty' => $qty, 'image' => $p['images'][0]['src'] ?? '' ];
             }
         }
         usort( $low, fn( $a, $b ) => $a['qty'] - $b['qty'] );
@@ -174,6 +174,7 @@ $active_store = in_array( sanitize_text_field( wp_unslash( $_GET['store'] ?? '' 
                             <?php foreach ( $us_out_items as $p ) : ?>
                             <div class="ubo-alert-row">
                                 <div class="ubo-alert-severity ubo-alert-severity-red"></div>
+                                <?php echo ubo_thumb( $p['images'][0]['src'] ?? '', 28, $p['name'] ); ?>
                                 <div class="ubo-alert-row-info">
                                     <div class="ubo-alert-row-name"><?php echo esc_html( $p['name'] ); ?></div>
                                     <?php if ( ! empty( $p['sku'] ) ) : ?><div class="ubo-alert-row-sku"><?php echo esc_html( $p['sku'] ); ?></div><?php endif; ?>
@@ -203,6 +204,7 @@ $active_store = in_array( sanitize_text_field( wp_unslash( $_GET['store'] ?? '' 
                             ?>
                             <div class="ubo-alert-row">
                                 <div class="ubo-alert-severity ubo-alert-severity-amber"></div>
+                                <?php echo ubo_thumb( $item['image'] ?? '', 28, $item['name'] ); ?>
                                 <div class="ubo-alert-row-info">
                                     <div class="ubo-alert-row-name"><?php echo esc_html( $item['name'] ); ?></div>
                                     <?php if ( ! empty( $item['sku'] ) ) : ?><div class="ubo-alert-row-sku"><?php echo esc_html( $item['sku'] ); ?></div><?php endif; ?>
@@ -240,6 +242,7 @@ $active_store = in_array( sanitize_text_field( wp_unslash( $_GET['store'] ?? '' 
                             <?php foreach ( $in_out_items as $p ) : ?>
                             <div class="ubo-alert-row">
                                 <div class="ubo-alert-severity ubo-alert-severity-red"></div>
+                                <?php echo ubo_thumb( $p['images'][0]['src'] ?? '', 28, $p['name'] ); ?>
                                 <div class="ubo-alert-row-info">
                                     <div class="ubo-alert-row-name"><?php echo esc_html( $p['name'] ); ?></div>
                                     <?php if ( ! empty( $p['sku'] ) ) : ?><div class="ubo-alert-row-sku"><?php echo esc_html( $p['sku'] ); ?></div><?php endif; ?>
@@ -269,6 +272,7 @@ $active_store = in_array( sanitize_text_field( wp_unslash( $_GET['store'] ?? '' 
                             ?>
                             <div class="ubo-alert-row">
                                 <div class="ubo-alert-severity ubo-alert-severity-amber"></div>
+                                <?php echo ubo_thumb( $item['image'] ?? '', 28, $item['name'] ); ?>
                                 <div class="ubo-alert-row-info">
                                     <div class="ubo-alert-row-name"><?php echo esc_html( $item['name'] ); ?></div>
                                     <?php if ( ! empty( $item['sku'] ) ) : ?><div class="ubo-alert-row-sku"><?php echo esc_html( $item['sku'] ); ?></div><?php endif; ?>

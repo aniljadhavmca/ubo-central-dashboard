@@ -76,7 +76,19 @@ class UBO_Orders {
         if ( empty( $site['url'] ) || empty( $site['ck'] ) || empty( $site['cs'] ) ) return [];
         $client  = new UBO_API_Client( $site['url'], $site['ck'], $site['cs'] );
         $results = $client->get( 'reports/top_sellers', [ 'period' => 'month', 'per_page' => $limit ] );
-        $data    = is_array( $results ) && ! isset( $results['error'] ) ? array_slice( $results, 0, $limit ) : [];
+        if ( ! is_array( $results ) || isset( $results['error'] ) ) {
+            set_transient( $cache_key, [], 5 * MINUTE_IN_SECONDS );
+            return [];
+        }
+        $data = array_slice( $results, 0, $limit );
+        // Fetch image for each product
+        foreach ( $data as &$item ) {
+            if ( ! empty( $item['product_id'] ) ) {
+                $p = $client->get( 'products/' . (int) $item['product_id'] );
+                $item['image'] = ( is_array( $p ) && ! empty( $p['images'][0]['src'] ) ) ? $p['images'][0]['src'] : '';
+            }
+        }
+        unset( $item );
         set_transient( $cache_key, $data, 5 * MINUTE_IN_SECONDS );
         return $data;
     }

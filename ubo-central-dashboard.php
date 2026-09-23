@@ -20,12 +20,22 @@ require_once UBO_PLUGIN_DIR . 'includes/class-webhook.php';
 
 UBO_Webhook::register();
 
+// Shared thumbnail helper
+if ( ! function_exists( 'ubo_thumb' ) ) {
+    function ubo_thumb( $src, $size = 32, $alt = '' ) {
+        if ( $src ) {
+            return '<img src="' . esc_url( $src ) . '" width="' . $size . '" height="' . $size . '" loading="lazy" alt="' . esc_attr( $alt ) . '" class="ubo-thumb" style="width:' . $size . 'px;height:' . $size . 'px;">';
+        }
+        return '<span class="ubo-thumb ubo-thumb-placeholder">📦</span>';
+    }
+}
+
 // Enqueue admin assets
 add_action( 'admin_enqueue_scripts', 'ubo_enqueue_assets' );
 function ubo_enqueue_assets( $hook ) {
     if ( strpos( $hook, 'ubo' ) === false ) return;
-    wp_enqueue_style( 'ubo-admin', plugin_dir_url( __FILE__ ) . 'assets/ubo-admin.css', [], '1.9.6' );
-    wp_enqueue_script( 'ubo-admin', plugin_dir_url( __FILE__ ) . 'assets/ubo-admin.js', [ 'jquery' ], '1.9.6', true );
+    wp_enqueue_style( 'ubo-admin', plugin_dir_url( __FILE__ ) . 'assets/ubo-admin.css', [], '1.9.7' );
+    wp_enqueue_script( 'ubo-admin', plugin_dir_url( __FILE__ ) . 'assets/ubo-admin.js', [ 'jquery' ], '1.9.7', true );
     wp_localize_script( 'ubo-admin', 'uboAdmin', [
         'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
         'nonce'       => wp_create_nonce( 'ubo_ajax' ),
@@ -34,7 +44,7 @@ function ubo_enqueue_assets( $hook ) {
     // V2 dashboard styles
     $page = sanitize_text_field( $_GET['page'] ?? '' );
     if ( in_array( $page, [ 'ubo-dashboard', 'ubo-alerts' ], true ) ) {
-        wp_enqueue_style( 'ubo-dashboard-v2', plugin_dir_url( __FILE__ ) . 'assets/ubo-dashboard-v2.css', [], '1.1.3' );
+        wp_enqueue_style( 'ubo-dashboard-v2', plugin_dir_url( __FILE__ ) . 'assets/ubo-dashboard-v2.css', [], '1.1.4' );
     }
 }
 

@@ -51,6 +51,7 @@ if ( ! function_exists( 'ubo_build_sku_index' ) ) {
                         'name' => $p['name'] . ( ( $color || $size ) ? ' — ' . implode( ' / ', array_filter( [ $color, $size ] ) ) : '' ),
                         'sku'  => $sku, 'qty' => (int)( $v['stock_quantity'] ?? 0 ),
                         'color' => $color, 'size' => $size, 'garment_type' => $garment_type,
+                        'image' => $p['images'][0]['src'] ?? '',
                     ];
                 }
             } else {
@@ -58,6 +59,7 @@ if ( ! function_exists( 'ubo_build_sku_index' ) ) {
                 $index[ $sku ] = [
                     'name' => $p['name'], 'sku' => $sku, 'qty' => (int)( $p['stock_quantity'] ?? 0 ),
                     'color' => '', 'size' => '', 'garment_type' => $garment_type,
+                    'image' => $p['images'][0]['src'] ?? '',
                 ];
             }
         }
@@ -200,7 +202,12 @@ $has_filters = $search || $sku_exact || $filter_color || $filter_size || $filter
                 ?>
                     <tr data-sku="<?php echo esc_attr( $sku ); ?>" data-us-stock="<?php echo (int)( $us_qty ?? 0 ); ?>" data-in-stock="<?php echo (int)( $in_qty ?? 0 ); ?>">
                         <td><span class="ubo-sku-code"><?php echo esc_html( $sku ); ?></span></td>
-                        <td style="max-width:200px;"><?php echo esc_html( $meta['name'] ?? $sku ); ?></td>
+                        <td style="max-width:220px;">
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <?php echo ubo_thumb( $meta['image'] ?? '', 28, $meta['name'] ?? $sku ); ?>
+                                <span><?php echo esc_html( $meta['name'] ?? $sku ); ?></span>
+                            </div>
+                        </td>
                         <td style="color:#64748b;font-size:12px;"><?php echo esc_html( $meta['garment_type'] ?? '' ); ?></td>
                         <td style="font-size:12px;"><?php echo esc_html( $meta['color'] ?? '' ); ?></td>
                         <td style="font-size:12px;"><?php echo esc_html( $meta['size'] ?? '' ); ?></td>
