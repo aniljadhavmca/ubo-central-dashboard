@@ -432,7 +432,7 @@
 .ubo-v2-wrap select.ubo-v2-chart-sel:focus { border-color: #635bff !important; }
 .ubo-v2-chart-wrap {
     position: relative;
-    height: 280px;
+    height: 300px;
     padding: 16px 18px 12px;
     box-sizing: border-box;
 }

@@ -34,7 +34,7 @@ function ubo_enqueue_assets( $hook ) {
     // V2 dashboard styles
     $page = sanitize_text_field( $_GET['page'] ?? '' );
     if ( $page === 'ubo-dashboard' ) {
-        wp_enqueue_style( 'ubo-dashboard-v2', plugin_dir_url( __FILE__ ) . 'assets/ubo-dashboard-v2.css', [], '1.0.4' );
+        wp_enqueue_style( 'ubo-dashboard-v2', plugin_dir_url( __FILE__ ) . 'assets/ubo-dashboard-v2.css', [], '1.0.5' );
         wp_enqueue_script( 'chartjs', 'https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js', [], null, true );
     }
 }

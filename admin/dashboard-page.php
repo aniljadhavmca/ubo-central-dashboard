@@ -263,16 +263,19 @@ $time = current_time( 'D, M j Y · g:i A' );
             var sym      = curSite === 'India' ? '₹' : '$';
 
             chartInst = new Chart( document.getElementById('ubo-sales-chart'), {
-                type: 'bar',
+                type: 'line',
                 data: {
                     labels: labels,
                     datasets: [{
                         data: data,
-                        backgroundColor: accentBg,
                         borderColor: accent,
-                        borderWidth: 2,
-                        borderRadius: 5,
-                        borderSkipped: false
+                        borderWidth: 2.5,
+                        pointBackgroundColor: accent,
+                        pointRadius: data.length <= 7 ? 5 : 3,
+                        pointHoverRadius: 7,
+                        fill: true,
+                        backgroundColor: accentBg,
+                        tension: 0.35
                     }]
                 },
                 options: {
@@ -289,7 +292,15 @@ $time = current_time( 'D, M j Y · g:i A' );
                         }
                     },
                     scales: {
-                        x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#8792a2' } },
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                font: { size: 11 },
+                                color: '#8792a2',
+                                maxTicksLimit: 10,
+                                maxRotation: 0
+                            }
+                        },
                         y: {
                             beginAtZero: true,
                             grid: { color: '#f0f3f6' },
