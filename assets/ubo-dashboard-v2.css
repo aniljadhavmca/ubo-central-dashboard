@@ -13,6 +13,11 @@
     max-width: 1440px;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
+    background: #f7fafc;
+    min-height: 100vh;
+    margin: -8px -20px;
+    padding: 24px 28px 56px;
+    box-sizing: border-box;
 }
 
 /* ── Header ── */
@@ -102,6 +107,10 @@
     font-size: 20px;
     flex-shrink: 0;
 }
+.ubo-v2-kpi-body {
+    flex: 1;
+    min-width: 0;
+}
 .ubo-v2-kpi-label {
     font-size: 11px;
     font-weight: 600;
@@ -111,16 +120,17 @@
     margin-bottom: 4px;
 }
 .ubo-v2-kpi-value {
-    font-size: 26px;
+    font-size: 28px;
     font-weight: 700;
     color: #1a1f36;
     line-height: 1.1;
-    letter-spacing: -.5px;
+    letter-spacing: -.6px;
 }
 .ubo-v2-kpi-split {
     display: flex;
-    gap: 10px;
-    margin-top: 5px;
+    gap: 8px;
+    margin-top: 6px;
+    flex-wrap: wrap;
 }
 .ubo-v2-flag-val {
     font-size: 11px;
@@ -178,7 +188,7 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 14px;
-    margin-bottom: 0;
+    margin-bottom: 24px;
 }
 .ubo-v2-status-list { padding: 10px 18px 14px; }
 .ubo-v2-status-row {
@@ -261,7 +271,7 @@
 }
 .ubo-v2-tab:hover { color: #3c4257; }
 .ubo-v2-tab.active { color: #635bff; border-bottom-color: #635bff; font-weight: 600; }
-.ubo-v2-tab-panel { display: none; padding: 8px 18px 14px; }
+.ubo-v2-tab-panel { display: none; padding: 12px 18px 16px; }
 .ubo-v2-tab-panel.active { display: block; }
 
 /* ── Rank rows ── */
