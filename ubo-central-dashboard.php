@@ -187,6 +187,92 @@ function ubo_ajax_save_reserved() {
     wp_send_json_success( [ 'reserved' => $qty, 'available' => $avail ] );
 }
 
+// AJAX: sales chart data by period
+add_action( 'wp_ajax_ubo_sales_chart', 'ubo_ajax_sales_chart' );
+function ubo_ajax_sales_chart() {
+    check_ajax_referer( 'ubo_ajax', 'nonce' );
+    if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error();
+
+    $site   = sanitize_text_field( wp_unslash( $_POST['site']   ?? 'US' ) );
+    $period = sanitize_text_field( wp_unslash( $_POST['period'] ?? 'this_month' ) );
+    $metric = sanitize_text_field( wp_unslash( $_POST['metric'] ?? 'quantity' ) );
+
+    if ( ! in_array( $site, [ 'US', 'India' ], true ) ) wp_send_json_error();
+
+    $sites = UBO_Orders::get_sites();
+    $s     = $sites[ $site ] ?? null;
+    if ( ! $s || empty( $s['url'] ) ) wp_send_json_error( [ 'message' => 'Store not configured.' ] );
+
+    $now = current_time( 'timestamp' );
+    switch ( $period ) {
+        case 'this_week':
+            $d_from = date( 'Y-m-d', strtotime( 'monday this week', $now ) );
+            $d_to   = date( 'Y-m-d', $now );
+            $group  = 'day'; break;
+        case 'prev_week':
+            $d_from = date( 'Y-m-d', strtotime( 'monday last week', $now ) );
+            $d_to   = date( 'Y-m-d', strtotime( 'sunday last week', $now ) );
+            $group  = 'day'; break;
+        case 'last_quarter':
+            $cm = (int) date( 'n', $now );
+            $cy = (int) date( 'Y', $now );
+            $qstart_m = (int) ceil( $cm / 3 ) * 3 - 5;
+            if ( $qstart_m < 1 ) { $qstart_m += 12; $cy--; }
+            $d_from = sprintf( '%04d-%02d-01', $cy, $qstart_m );
+            $d_to   = date( 'Y-m-t', mktime( 0, 0, 0, $qstart_m + 2, 1, $cy ) );
+            $group  = 'month'; break;
+        case 'this_year':
+            $d_from = date( 'Y-01-01', $now );
+            $d_to   = date( 'Y-m-d', $now );
+            $group  = 'month'; break;
+        case 'prev_year':
+            $py     = (int) date( 'Y', $now ) - 1;
+            $d_from = $py . '-01-01';
+            $d_to   = $py . '-12-31';
+            $group  = 'month'; break;
+        default: // this_month
+            $d_from = date( 'Y-m-01', $now );
+            $d_to   = date( 'Y-m-d', $now );
+            $group  = 'day';
+    }
+
+    $client     = new UBO_API_Client( $s['url'], $s['ck'], $s['cs'] );
+    $all_orders = [];
+    for ( $pg = 1; $pg <= 4; $pg++ ) {
+        $batch = $client->get( 'orders', [
+            'after'    => $d_from . 'T00:00:00',
+            'before'   => $d_to   . 'T23:59:59',
+            'per_page' => 50,
+            'page'     => $pg,
+            'status'   => 'any',
+        ] );
+        if ( ! is_array( $batch ) || isset( $batch['error'] ) || empty( $batch ) ) break;
+        $all_orders = array_merge( $all_orders, $batch );
+        if ( count( $batch ) < 50 ) break;
+    }
+
+    $buckets = [];
+    foreach ( $all_orders as $order ) {
+        $ts  = strtotime( $order['date_created'] );
+        $key = $group === 'month' ? date( 'Y-m', $ts ) : date( 'Y-m-d', $ts );
+        if ( ! isset( $buckets[ $key ] ) ) $buckets[ $key ] = [ 'quantity' => 0, 'value' => 0.0 ];
+        $buckets[ $key ]['value'] += (float) ( $order['total'] ?? 0 );
+        foreach ( $order['line_items'] ?? [] as $li ) {
+            $buckets[ $key ]['quantity'] += (int) ( $li['quantity'] ?? 0 );
+        }
+    }
+    ksort( $buckets );
+
+    $labels = [];
+    $data   = [];
+    foreach ( $buckets as $k => $v ) {
+        $labels[] = $group === 'month' ? date( 'M Y', strtotime( $k . '-01' ) ) : date( 'M j', strtotime( $k ) );
+        $data[]   = $metric === 'value' ? round( $v['value'], 2 ) : $v['quantity'];
+    }
+
+    wp_send_json_success( [ 'labels' => $labels, 'data' => $data, 'metric' => $metric, 'site' => $site ] );
+}
+
 // AJAX: update product price / sale price / stock qty
 add_action( 'wp_ajax_ubo_update_product', 'ubo_ajax_update_product' );
 function ubo_ajax_update_product() {
