@@ -24,8 +24,8 @@ UBO_Webhook::register();
 add_action( 'admin_enqueue_scripts', 'ubo_enqueue_assets' );
 function ubo_enqueue_assets( $hook ) {
     if ( strpos( $hook, 'ubo' ) === false ) return;
-    wp_enqueue_style( 'ubo-admin', plugin_dir_url( __FILE__ ) . 'assets/ubo-admin.css', [], '1.9.4' );
-    wp_enqueue_script( 'ubo-admin', plugin_dir_url( __FILE__ ) . 'assets/ubo-admin.js', [ 'jquery' ], '1.9.4', true );
+    wp_enqueue_style( 'ubo-admin', plugin_dir_url( __FILE__ ) . 'assets/ubo-admin.css', [], '1.9.5' );
+    wp_enqueue_script( 'ubo-admin', plugin_dir_url( __FILE__ ) . 'assets/ubo-admin.js', [ 'jquery' ], '1.9.5', true );
     wp_localize_script( 'ubo-admin', 'uboAdmin', [
         'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
         'nonce'       => wp_create_nonce( 'ubo_ajax' ),
@@ -34,7 +34,7 @@ function ubo_enqueue_assets( $hook ) {
     // V2 dashboard styles
     $page = sanitize_text_field( $_GET['page'] ?? '' );
     if ( in_array( $page, [ 'ubo-dashboard', 'ubo-alerts' ], true ) ) {
-        wp_enqueue_style( 'ubo-dashboard-v2', plugin_dir_url( __FILE__ ) . 'assets/ubo-dashboard-v2.css', [], '1.1.2' );
+        wp_enqueue_style( 'ubo-dashboard-v2', plugin_dir_url( __FILE__ ) . 'assets/ubo-dashboard-v2.css', [], '1.1.3' );
     }
 }
 
@@ -285,6 +285,20 @@ function ubo_ajax_sales_chart() {
     wp_send_json_success( [ 'labels' => $labels, 'data' => $data, 'metric' => $metric, 'site' => $site ] );
 }
 
+// AJAX: manual cache refresh — busts all transients for both sites
+add_action( 'wp_ajax_ubo_refresh_cache', 'ubo_ajax_refresh_cache' );
+function ubo_ajax_refresh_cache() {
+    check_ajax_referer( 'ubo_ajax', 'nonce' );
+    if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error();
+    foreach ( [ 'US', 'India' ] as $s ) {
+        delete_transient( 'ubo_totals_'      . $s );
+        delete_transient( 'ubo_top_sellers_' . $s );
+        delete_transient( 'ubo_top_stocked_' . $s );
+        delete_transient( 'ubo_insights_'    . $s );
+    }
+    wp_send_json_success( [ 'message' => 'Cache cleared. Data will reload fresh.' ] );
+}
+
 // AJAX: update product price / sale price / stock qty
 add_action( 'wp_ajax_ubo_update_product', 'ubo_ajax_update_product' );
 function ubo_ajax_update_product() {
@@ -351,6 +365,12 @@ function ubo_ajax_update_product() {
         $adjustment = $new_qty - $orig_qty;
         UBO_Adjustments::log( $sku, $site, $adjustment, $reason, $note );
     }
+
+    // Bust all transients for this site so next page load shows fresh data
+    delete_transient( 'ubo_totals_'      . $site );
+    delete_transient( 'ubo_top_sellers_' . $site );
+    delete_transient( 'ubo_top_stocked_' . $site );
+    delete_transient( 'ubo_insights_'    . $site );
 
     wp_send_json_success( [ 'message' => 'Product updated successfully.' ] );
 }

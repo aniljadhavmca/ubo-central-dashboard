@@ -92,6 +92,7 @@ $active_store = in_array( sanitize_text_field( wp_unslash( $_GET['store'] ?? '' 
         </div>
         <div class="ubo-v2-header-right">
             <a href="<?php echo esc_url( admin_url('admin.php?page=ubo-dashboard') ); ?>" class="ubo-v2-btn">← Dashboard</a>
+            <button id="ubo-refresh-btn" class="ubo-v2-btn ubo-v2-btn-refresh" title="Clear cache &amp; reload fresh data">↻ Refresh</button>
         </div>
     </div>
 
@@ -374,6 +375,18 @@ function ubo_render_insights( $ins, $prefix ) {
         $(this).addClass('active');
         $('.ubo-store-panel').removeClass('active');
         $('[data-panel="' + store + '"]').addClass('active');
+    });
+
+    // Refresh button
+    $(document).on('click', '#ubo-refresh-btn', function() {
+        var $btn = $(this);
+        $btn.text('↻ Refreshing…').prop('disabled', true);
+        $.post(uboAdmin.ajaxUrl, { action: 'ubo_refresh_cache', nonce: uboAdmin.nonce }, function() {
+            $btn.text('✓ Done!');
+            setTimeout(function() { location.reload(); }, 600);
+        }, 'json').fail(function() {
+            $btn.text('↻ Refresh').prop('disabled', false);
+        });
     });
 })(jQuery);
 </script>

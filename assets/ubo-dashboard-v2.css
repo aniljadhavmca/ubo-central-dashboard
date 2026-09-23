@@ -76,6 +76,9 @@
 .ubo-v2-btn:hover { background: #f6f8fa; color: #1a1f36; }
 .ubo-v2-btn-alert { border-color: #fca5a5; color: #dc2626; background: #fef2f2; }
 .ubo-v2-btn-alert:hover { background: #fee2e2; color: #b91c1c; }
+.ubo-v2-btn-refresh { border-color: #a5b4fc; color: #4f46e5; background: #eef2ff; }
+.ubo-v2-btn-refresh:hover { background: #e0e7ff; color: #3730a3; }
+.ubo-v2-btn-refresh:disabled { opacity: .7; cursor: default; }
 
 /* ── KPI Grid ── */
 .ubo-v2-kpi-grid {

@@ -26,6 +26,7 @@ $time = current_time( 'D, M j Y · g:i A' );
             <span class="ubo-v2-time">🕐 <?php echo esc_html( $time ); ?></span>
             <a href="<?php echo esc_url( admin_url('admin.php?page=ubo-sku') ); ?>" class="ubo-v2-btn">📦 SKU Central</a>
             <a href="<?php echo esc_url( admin_url('admin.php?page=ubo-alerts') ); ?>" class="ubo-v2-btn ubo-v2-btn-alert">🔔 Alerts</a>
+            <button id="ubo-refresh-btn" class="ubo-v2-btn ubo-v2-btn-refresh" title="Clear cache &amp; reload fresh data">↻ Refresh</button>
         </div>
     </div>
 
@@ -458,6 +459,18 @@ $time = current_time( 'D, M j Y · g:i A' );
     });
 
     $(window).on('load', loadChart);
+
+    // ── Refresh button ──
+    $(document).on('click', '#ubo-refresh-btn', function() {
+        var $btn = $(this);
+        $btn.text('↻ Refreshing…').prop('disabled', true);
+        $.post(uboAdmin.ajaxUrl, { action: 'ubo_refresh_cache', nonce: uboAdmin.nonce }, function(res) {
+            $btn.text('✓ Done!');
+            setTimeout(function() { location.reload(); }, 600);
+        }, 'json').fail(function() {
+            $btn.text('↻ Refresh').prop('disabled', false);
+        });
+    });
 
 })(jQuery);
 </script>
