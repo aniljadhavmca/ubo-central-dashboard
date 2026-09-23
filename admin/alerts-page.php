@@ -40,6 +40,8 @@ $in_low = ubo_alert_low_stock( $in_all, $threshold );
 
 $us_out_items = is_array( $us_out ) && ! isset( $us_out['error'] ) ? $us_out : [];
 $in_out_items = is_array( $in_out ) && ! isset( $in_out['error'] ) ? $in_out : [];
+$us_in        = is_array( $us_all ) && ! isset( $us_all['error'] ) ? count( $us_all ) : 0;
+$in_in        = is_array( $in_all ) && ! isset( $in_all['error'] ) ? count( $in_all ) : 0;
 
 $total_out = count( $us_out_items ) + count( $in_out_items );
 $total_low = count( $us_low ) + count( $in_low );
@@ -90,11 +92,7 @@ $total_low = count( $us_low ) + count( $in_low );
         <div class="ubo-alert-kpi ubo-alert-kpi-green">
             <div class="ubo-alert-kpi-icon">✅</div>
             <div>
-                <div class="ubo-alert-kpi-val"><?php
-                    $us_in  = is_array( $us_all ) && ! isset( $us_all['error'] ) ? count( $us_all ) : 0;
-                    $in_in  = is_array( $in_all ) && ! isset( $in_all['error'] ) ? count( $in_all ) : 0;
-                    echo max( 0, $us_in + $in_in - $total_out - $total_low );
-                ?></div>
+                <div class="ubo-alert-kpi-val"><?php echo max( 0, $us_in + $in_in - $total_out - $total_low ); ?></div>
                 <div class="ubo-alert-kpi-label">Healthy Stock</div>
             </div>
         </div>
@@ -334,6 +332,7 @@ $total_low = count( $us_low ) + count( $in_low );
 
 <?php
 // Helper: map common color names to hex for the dot
+if ( ! function_exists( 'ubo_color_hex' ) ) {
 function ubo_color_hex( $color ) {
     $map = [
         'black'=>'#1a1a1a','white'=>'#f5f5f5','red'=>'#ef4444','blue'=>'#3b82f6',
@@ -344,8 +343,10 @@ function ubo_color_hex( $color ) {
     ];
     return $map[ strtolower( $color ) ] ?? '#635bff';
 }
+}
 
 // Helper: country code to flag emoji
+if ( ! function_exists( 'ubo_country_flag' ) ) {
 function ubo_country_flag( $code ) {
     $code = strtoupper( $code );
     if ( strlen( $code ) !== 2 ) return '🌐';
@@ -354,6 +355,7 @@ function ubo_country_flag( $code ) {
         $flag .= mb_chr( 0x1F1E6 + ord( $c ) - ord( 'A' ) );
     }
     return $flag;
+}
 }
 ?>
 

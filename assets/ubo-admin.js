@@ -414,10 +414,11 @@
 
                         // Get the OTHER store's current reserved from its input
                         var otherRes  = 0;
+                        var $otherForm;
                         if ( site === 'US' ) {
-                            var $otherForm = $row.find('.ubo-reserved-form[data-site="India"]');
+                            $otherForm = $row.find('.ubo-reserved-form[data-site="India"]');
                         } else {
-                            var $otherForm = $row.find('.ubo-reserved-form[data-site="US"]');
+                            $otherForm = $row.find('.ubo-reserved-form[data-site="US"]');
                         }
                         if ( $otherForm.length ) {
                             otherRes = parseInt( $otherForm.find('[name="reserved_qty"]').val(), 10 ) || 0;

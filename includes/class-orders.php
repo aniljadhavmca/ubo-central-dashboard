@@ -88,19 +88,25 @@ class UBO_Orders {
         if ( empty( $site['url'] ) || empty( $site['ck'] ) || empty( $site['cs'] ) ) return [];
 
         $client = new UBO_API_Client( $site['url'], $site['ck'], $site['cs'] );
-        $orders = $client->get( 'orders', [
-            'per_page' => 100,
-            'status'   => 'completed,processing',
-            'after'    => date( 'Y-01-01' ) . 'T00:00:00',
-        ] );
-        if ( ! is_array( $orders ) || isset( $orders['error'] ) ) return [];
+        $all_orders = [];
+        foreach ( [ 'completed', 'processing' ] as $status ) {
+            $batch = $client->get( 'orders', [
+                'per_page' => 50,
+                'status'   => $status,
+                'after'    => date( 'Y-01-01' ) . 'T00:00:00',
+            ] );
+            if ( is_array( $batch ) && ! isset( $batch['error'] ) ) {
+                $all_orders = array_merge( $all_orders, $batch );
+            }
+        }
+        if ( empty( $all_orders ) ) return [];
 
         $products  = [];
         $colors    = [];
         $sizes     = [];
         $countries = [];
 
-        foreach ( $orders as $order ) {
+        foreach ( $all_orders as $order ) {
             // Country
             $country = $order['billing']['country'] ?? $order['shipping']['country'] ?? '';
             if ( $country ) $countries[ $country ] = ( $countries[ $country ] ?? 0 ) + 1;
