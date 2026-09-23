@@ -81,6 +81,60 @@ class UBO_Orders {
         return array_slice( $products, 0, $limit );
     }
 
+    // Insights: best products, colors, sizes, countries from recent orders
+    public static function get_insights( $site_key, $limit = 8 ) {
+        $sites = self::get_sites();
+        $site  = $sites[ $site_key ];
+        if ( empty( $site['url'] ) || empty( $site['ck'] ) || empty( $site['cs'] ) ) return [];
+
+        $client = new UBO_API_Client( $site['url'], $site['ck'], $site['cs'] );
+        $orders = $client->get( 'orders', [
+            'per_page' => 100,
+            'status'   => 'completed,processing',
+            'after'    => date( 'Y-01-01' ) . 'T00:00:00',
+        ] );
+        if ( ! is_array( $orders ) || isset( $orders['error'] ) ) return [];
+
+        $products  = [];
+        $colors    = [];
+        $sizes     = [];
+        $countries = [];
+
+        foreach ( $orders as $order ) {
+            // Country
+            $country = $order['billing']['country'] ?? $order['shipping']['country'] ?? '';
+            if ( $country ) $countries[ $country ] = ( $countries[ $country ] ?? 0 ) + 1;
+
+            foreach ( $order['line_items'] ?? [] as $li ) {
+                $qty  = (int) ( $li['quantity'] ?? 1 );
+                $name = $li['name'] ?? '';
+
+                // Product
+                $products[ $name ] = ( $products[ $name ] ?? 0 ) + $qty;
+
+                // Parse color & size from variation meta
+                foreach ( $li['meta_data'] ?? [] as $meta ) {
+                    $key = strtolower( $meta['key'] ?? '' );
+                    $val = ucfirst( strtolower( $meta['value'] ?? '' ) );
+                    if ( ! $val ) continue;
+                    if ( in_array( $key, [ 'color', 'colour', 'pa_color', 'pa_colour' ] ) )
+                        $colors[ $val ] = ( $colors[ $val ] ?? 0 ) + $qty;
+                    if ( in_array( $key, [ 'size', 'pa_size', 'pa_sizes' ] ) )
+                        $sizes[ $val ] = ( $sizes[ $val ] ?? 0 ) + $qty;
+                }
+            }
+        }
+
+        arsort( $products );  arsort( $colors );  arsort( $sizes );  arsort( $countries );
+
+        return [
+            'products'  => array_slice( $products,  0, $limit, true ),
+            'colors'    => array_slice( $colors,    0, $limit, true ),
+            'sizes'     => array_slice( $sizes,     0, $limit, true ),
+            'countries' => array_slice( $countries, 0, $limit, true ),
+        ];
+    }
+
     // Order status breakdown counts
     public static function get_status_summary( $site_key ) {
         $sites = self::get_sites();

@@ -380,6 +380,192 @@
     font-weight: 600;
 }
 
+/* ── Alerts page ── */
+.ubo-alerts-wrap .ubo-v2-header { margin-bottom: 20px; }
+
+.ubo-alert-kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+}
+.ubo-alert-kpi {
+    background: #fff;
+    border: 1px solid #e8ecf0;
+    border-radius: 10px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04);
+    border-left: 4px solid transparent;
+}
+.ubo-alert-kpi-red   { border-left-color: #ef4444; }
+.ubo-alert-kpi-amber { border-left-color: #f59e0b; }
+.ubo-alert-kpi-green { border-left-color: #10b981; }
+.ubo-alert-kpi-blue  { border-left-color: #3b82f6; }
+.ubo-alert-kpi-icon  { font-size: 22px; flex-shrink: 0; }
+.ubo-alert-kpi-val {
+    font-size: 26px;
+    font-weight: 700;
+    color: #1a1f36;
+    line-height: 1;
+    letter-spacing: -.5px;
+}
+.ubo-alert-kpi-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #8792a2;
+    margin-top: 3px;
+}
+.ubo-alert-kpi-split {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-left: auto;
+    font-size: 11px;
+    color: #8792a2;
+}
+
+/* Alert cards */
+.ubo-alert-card { border-top: 3px solid transparent; }
+.ubo-alert-card-red   { border-top-color: #ef4444; }
+.ubo-alert-card-amber { border-top-color: #f59e0b; }
+
+.ubo-alert-list { padding: 6px 0 8px; }
+.ubo-alert-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 18px;
+    border-bottom: 1px solid #f6f8fa;
+    transition: background .12s;
+}
+.ubo-alert-row:last-child { border-bottom: none; }
+.ubo-alert-row:hover { background: #fafbff; }
+.ubo-alert-severity {
+    width: 3px;
+    height: 32px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+.ubo-alert-severity-red   { background: #ef4444; }
+.ubo-alert-severity-amber { background: #f59e0b; }
+.ubo-alert-row-info { flex: 1; min-width: 0; }
+.ubo-alert-row-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: #1a1f36;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ubo-alert-row-sku {
+    font-size: 11px;
+    color: #8792a2;
+    margin-top: 1px;
+    font-family: monospace;
+}
+.ubo-alert-stock-bar-wrap {
+    height: 3px;
+    background: #f0f3f6;
+    border-radius: 2px;
+    margin-top: 5px;
+    overflow: hidden;
+}
+.ubo-alert-stock-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width .4s ease;
+}
+.ubo-alert-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 20px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.ubo-alert-badge-red   { background: #fef2f2; color: #dc2626; }
+.ubo-alert-badge-amber { background: #fffbeb; color: #b45309; }
+
+/* Insights rows */
+.ubo-ins-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f6f8fa;
+}
+.ubo-ins-row:last-child { border-bottom: none; }
+.ubo-ins-color-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    border: 1px solid rgba(0,0,0,.08);
+}
+.ubo-ins-flag { font-size: 18px; flex-shrink: 0; }
+.ubo-ins-info { flex: 1; min-width: 0; }
+.ubo-ins-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: #1a1f36;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 4px;
+}
+.ubo-ins-bar-wrap {
+    height: 4px;
+    background: #f0f3f6;
+    border-radius: 2px;
+    overflow: hidden;
+}
+.ubo-ins-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width .5s ease;
+}
+.ubo-ins-bar-purple { background: linear-gradient(90deg, #635bff, #818cf8); }
+.ubo-ins-bar-pink   { background: linear-gradient(90deg, #ec4899, #f472b6); }
+.ubo-ins-bar-teal   { background: linear-gradient(90deg, #14b8a6, #2dd4bf); }
+.ubo-ins-bar-blue   { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+
+.ubo-ins-size-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f6f8fa;
+}
+.ubo-ins-size-row:last-child { border-bottom: none; }
+.ubo-ins-size-tag {
+    font-size: 11px;
+    font-weight: 700;
+    background: #f0f3f6;
+    color: #3c4257;
+    padding: 3px 8px;
+    border-radius: 5px;
+    min-width: 36px;
+    text-align: center;
+    flex-shrink: 0;
+}
+.ubo-ins-size-pct {
+    font-size: 11px;
+    color: #8792a2;
+    min-width: 30px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+    .ubo-alert-kpi-row { grid-template-columns: repeat(2, 1fr); }
+}
+
 /* ── Sales Chart ── */
 .ubo-v2-chart-card { padding: 0; }
 .ubo-v2-chart-toolbar {
