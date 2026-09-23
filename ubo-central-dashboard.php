@@ -31,6 +31,11 @@ function ubo_enqueue_assets( $hook ) {
         'nonce'       => wp_create_nonce( 'ubo_ajax' ),
         'currentPage' => sanitize_text_field( $_GET['page'] ?? '' ),
     ] );
+    // V2 dashboard styles
+    $page = sanitize_text_field( $_GET['page'] ?? '' );
+    if ( $page === 'ubo-dashboard' ) {
+        wp_enqueue_style( 'ubo-dashboard-v2', plugin_dir_url( __FILE__ ) . 'assets/ubo-dashboard-v2.css', [], '1.0.0' );
+    }
 }
 
 // AJAX: live search SKUs
