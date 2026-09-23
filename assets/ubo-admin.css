@@ -267,30 +267,44 @@
 
 /* Inline reserved input */
 .ubo-reserved-wrap { display: flex; align-items: center; gap: 5px; }
+#wpwrap .ubo-reserved-input,
 .ubo-reserved-input {
-    width: 58px;
-    height: 28px;
-    padding: 0 6px;
-    border: 1px solid #d1d5db;
-    border-radius: 5px;
-    font-size: 12px;
-    text-align: center;
-    color: #1e293b;
+    width: 62px !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    max-height: 28px !important;
+    padding: 0 4px 0 6px !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 5px !important;
+    font-size: 12px !important;
+    text-align: center !important;
+    color: #1e293b !important;
+    box-shadow: none !important;
+    box-sizing: border-box !important;
+    line-height: 28px !important;
+    vertical-align: middle !important;
 }
-.ubo-reserved-input:focus { border-color: #7c3aed; outline: none; }
+#wpwrap .ubo-reserved-input:focus,
+.ubo-reserved-input:focus { border-color: #7c3aed !important; outline: none !important; }
+#wpwrap .ubo-save-btn,
 .ubo-save-btn {
-    height: 28px;
-    padding: 0 10px;
-    font-size: 11px;
-    font-weight: 600;
-    background: #f1f5f9;
-    border: 1px solid #d1d5db;
-    border-radius: 5px;
-    cursor: pointer;
-    color: #374151;
+    height: 28px !important;
+    min-height: 28px !important;
+    padding: 0 10px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    background: #f1f5f9 !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 5px !important;
+    cursor: pointer !important;
+    color: #374151 !important;
+    line-height: 28px !important;
+    box-sizing: border-box !important;
+    vertical-align: middle !important;
     transition: all .15s;
 }
-.ubo-save-btn:hover { background: #e2e8f0; }
+#wpwrap .ubo-save-btn:hover,
+.ubo-save-btn:hover { background: #e2e8f0 !important; }
 
 /* Stat cards */
 .ubo-stat-grid {
