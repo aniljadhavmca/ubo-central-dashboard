@@ -15,25 +15,6 @@ $in_threshold = ubo_get_threshold( 'India' );
 $us_inv       = UBO_Inventory::fetch( 'US',    [ 'per_page' => 100 ] );
 $in_inv       = UBO_Inventory::fetch( 'India', [ 'per_page' => 100 ] );
 
-if ( ! function_exists( 'ubo_dash_count_low' ) ) {
-    function ubo_dash_count_low( $products, $threshold ) {
-        $count = 0;
-        if ( ! is_array( $products ) || isset( $products['error'] ) ) return 0;
-        foreach ( $products as $p ) {
-            if ( ( $p['type'] ?? '' ) === 'variable' && ! empty( $p['variations_data'] ) ) {
-                foreach ( $p['variations_data'] as $v ) {
-                    $qty = (int)( $v['stock_quantity'] ?? 0 );
-                    if ( ( $v['stock_status'] ?? '' ) === 'outofstock' || $qty <= $threshold ) $count++;
-                }
-            } else {
-                $qty = (int)( $p['stock_quantity'] ?? 0 );
-                if ( ( $p['stock_status'] ?? '' ) === 'outofstock' || $qty <= $threshold ) $count++;
-            }
-        }
-        return $count;
-    }
-}
-
 $us_low_count = ubo_dash_count_low( $us_inv, $us_threshold );
 $in_low_count = ubo_dash_count_low( $in_inv, $in_threshold );
 
@@ -101,10 +82,10 @@ $time = current_time( 'D, M j Y · g:i A' );
             <div class="ubo-v2-kpi-icon" style="background:#fef2f2;color:#ef4444;">⚠️</div>
             <div class="ubo-v2-kpi-body">
                 <div class="ubo-v2-kpi-label">Low / Out of Stock</div>
-                <div class="ubo-v2-kpi-value" style="color:#ef4444;"><?php echo $us_low_count + $in_low_count; ?></div>
+                <div class="ubo-v2-kpi-value" style="color:#ef4444;"><?php echo (int) ($us_low_count + $in_low_count); ?></div>
                 <div class="ubo-v2-kpi-split">
-                    <span class="ubo-v2-flag-val">🇺🇸 <?php echo $us_low_count; ?> &le;<?php echo $us_threshold; ?></span>
-                    <span class="ubo-v2-flag-val">🇮🇳 <?php echo $in_low_count; ?> &le;<?php echo $in_threshold; ?></span>
+                    <span class="ubo-v2-flag-val">🇺🇸 <?php echo (int) $us_low_count; ?> &le;<?php echo (int) $us_threshold; ?></span>
+                    <span class="ubo-v2-flag-val">🇮🇳 <?php echo (int) $in_low_count; ?> &le;<?php echo (int) $in_threshold; ?></span>
                 </div>
             </div>
         </div>
@@ -130,7 +111,7 @@ $time = current_time( 'D, M j Y · g:i A' );
                     <?php else : ?>
                         <?php foreach ( $us_sellers as $i => $item ) : ?>
                         <div class="ubo-v2-rank-row">
-                            <span class="ubo-v2-rank-num"><?php echo $i + 1; ?></span>
+                            <span class="ubo-v2-rank-num"><?php echo (int) ($i + 1); ?></span>
                             <?php echo ubo_thumb( $item['image'] ?? '', 28, $item['name'] ?? '' ); ?>
                             <div class="ubo-v2-rank-info">
                                 <div class="ubo-v2-rank-name"><?php echo esc_html( $item['name'] ?? 'Product #' . $item['product_id'] ); ?></div>
@@ -147,7 +128,7 @@ $time = current_time( 'D, M j Y · g:i A' );
                     <?php else : ?>
                         <?php foreach ( $india_sellers as $i => $item ) : ?>
                         <div class="ubo-v2-rank-row">
-                            <span class="ubo-v2-rank-num"><?php echo $i + 1; ?></span>
+                            <span class="ubo-v2-rank-num"><?php echo (int) ($i + 1); ?></span>
                             <?php echo ubo_thumb( $item['image'] ?? '', 28, $item['name'] ?? '' ); ?>
                             <div class="ubo-v2-rank-info">
                                 <div class="ubo-v2-rank-name"><?php echo esc_html( $item['name'] ?? 'Product #' . $item['product_id'] ); ?></div>
@@ -181,12 +162,12 @@ $time = current_time( 'D, M j Y · g:i A' );
                             $pct = $max_us > 0 ? round( ( $qty / $max_us ) * 100 ) : 0;
                     ?>
                         <div class="ubo-v2-rank-row">
-                            <span class="ubo-v2-rank-num"><?php echo $i + 1; ?></span>
+                            <span class="ubo-v2-rank-num"><?php echo (int) ($i + 1); ?></span>
                             <?php echo ubo_thumb( $p['images'][0]['src'] ?? '', 28, $p['name'] ); ?>
                             <div class="ubo-v2-rank-info" style="flex:1;">
                                 <div class="ubo-v2-rank-name"><?php echo esc_html( $p['name'] ); ?></div>
                                 <div class="ubo-v2-stock-bar-wrap">
-                                    <div class="ubo-v2-stock-bar-fill" style="width:<?php echo $pct; ?>%;"></div>
+                                    <div class="ubo-v2-stock-bar-fill" style="width:<?php echo (int) $pct; ?>%;"></div>
                                 </div>
                             </div>
                             <span class="ubo-v2-rank-badge ubo-v2-badge-green"><?php echo esc_html( $qty ); ?> units</span>
@@ -203,12 +184,12 @@ $time = current_time( 'D, M j Y · g:i A' );
                             $pct = $max_in > 0 ? round( ( $qty / $max_in ) * 100 ) : 0;
                     ?>
                         <div class="ubo-v2-rank-row">
-                            <span class="ubo-v2-rank-num"><?php echo $i + 1; ?></span>
+                            <span class="ubo-v2-rank-num"><?php echo (int) ($i + 1); ?></span>
                             <?php echo ubo_thumb( $p['images'][0]['src'] ?? '', 28, $p['name'] ); ?>
                             <div class="ubo-v2-rank-info" style="flex:1;">
                                 <div class="ubo-v2-rank-name"><?php echo esc_html( $p['name'] ); ?></div>
                                 <div class="ubo-v2-stock-bar-wrap">
-                                    <div class="ubo-v2-stock-bar-fill" style="width:<?php echo $pct; ?>%;"></div>
+                                    <div class="ubo-v2-stock-bar-fill" style="width:<?php echo (int) $pct; ?>%;"></div>
                                 </div>
                             </div>
                             <span class="ubo-v2-rank-badge ubo-v2-badge-green"><?php echo esc_html( $qty ); ?> units</span>

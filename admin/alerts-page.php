@@ -2,56 +2,6 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 if ( ! current_user_can( 'manage_options' ) ) return;
 
-// ── Helpers defined FIRST so they're available everywhere below ──
-if ( ! function_exists( 'ubo_color_hex' ) ) {
-    function ubo_color_hex( $color ) {
-        $map = [
-            'black'=>'#1a1a1a','white'=>'#f5f5f5','red'=>'#ef4444','blue'=>'#3b82f6',
-            'green'=>'#22c55e','yellow'=>'#eab308','orange'=>'#f97316','pink'=>'#ec4899',
-            'purple'=>'#a855f7','grey'=>'#9ca3af','gray'=>'#9ca3af','brown'=>'#92400e',
-            'navy'=>'#1e3a5f','maroon'=>'#7f1d1d','beige'=>'#d4b896','cream'=>'#fef9c3',
-            'teal'=>'#14b8a6','indigo'=>'#6366f1','violet'=>'#8b5cf6','gold'=>'#d97706',
-        ];
-        return $map[ strtolower( $color ) ] ?? '#635bff';
-    }
-}
-if ( ! function_exists( 'ubo_country_flag' ) ) {
-    function ubo_country_flag( $code ) {
-        $code = strtoupper( trim( $code ) );
-        if ( strlen( $code ) !== 2 ) return '🌐';
-        $flag = '';
-        foreach ( str_split( $code ) as $c ) {
-            $ord = ord( $c ) - ord( 'A' );
-            if ( $ord < 0 || $ord > 25 ) return '🌐';
-            $flag .= mb_chr( 0x1F1E6 + $ord );
-        }
-        return $flag;
-    }
-}
-if ( ! function_exists( 'ubo_alert_low_stock' ) ) {
-    function ubo_alert_low_stock( $products, $threshold ) {
-        $low = [];
-        if ( ! is_array( $products ) || isset( $products['error'] ) ) return $low;
-        foreach ( $products as $p ) {
-            if ( ( $p['type'] ?? '' ) === 'variable' && ! empty( $p['variations_data'] ) ) {
-                foreach ( $p['variations_data'] as $v ) {
-                    $qty = (int)( $v['stock_quantity'] ?? 0 );
-                    if ( $qty > 0 && $qty <= $threshold ) {
-                        $attrs = implode( ' / ', array_map( fn($a) => $a['option'], $v['attributes'] ?? [] ) );
-                        $low[] = [ 'name' => $p['name'] . ( $attrs ? ' — ' . $attrs : '' ), 'sku' => $v['sku'] ?? '', 'qty' => $qty, 'image' => $p['images'][0]['src'] ?? '' ];
-                    }
-                }
-            } else {
-                $qty = (int)( $p['stock_quantity'] ?? 0 );
-                if ( $qty > 0 && $qty <= $threshold )
-                    $low[] = [ 'name' => $p['name'], 'sku' => $p['sku'] ?? '', 'qty' => $qty, 'image' => $p['images'][0]['src'] ?? '' ];
-            }
-        }
-        usort( $low, fn( $a, $b ) => $a['qty'] - $b['qty'] );
-        return $low;
-    }
-}
-
 // ── Data ──
 $us_threshold = ubo_get_threshold( 'US' );
 $in_threshold = ubo_get_threshold( 'India' );
@@ -62,39 +12,6 @@ $in_insights  = UBO_Orders::get_insights( 'India', 8 );
 
 $us_low       = ubo_alert_low_stock( $us_all, $us_threshold );
 $in_low       = ubo_alert_low_stock( $in_all, $in_threshold );
-
-// Build out-of-stock lists counting individual variations, not just parent products
-function ubo_alert_out_of_stock( $products ) {
-    $out = [];
-    if ( ! is_array( $products ) || isset( $products['error'] ) ) return $out;
-    foreach ( $products as $p ) {
-        if ( ( $p['type'] ?? '' ) === 'variable' && ! empty( $p['variations_data'] ) ) {
-            foreach ( $p['variations_data'] as $v ) {
-                $qty = (int)( $v['stock_quantity'] ?? 0 );
-                $st  = $v['stock_status'] ?? 'instock';
-                if ( $st === 'outofstock' || $qty === 0 ) {
-                    $attrs = implode( ' / ', array_map( fn($a) => $a['option'], $v['attributes'] ?? [] ) );
-                    $out[] = [
-                        'name'  => $p['name'] . ( $attrs ? ' — ' . $attrs : '' ),
-                        'sku'   => $v['sku'] ?? '',
-                        'image' => ! empty( $v['image']['src'] ) ? $v['image']['src'] : ( $p['images'][0]['src'] ?? '' ),
-                    ];
-                }
-            }
-        } else {
-            $st  = $p['stock_status'] ?? 'instock';
-            $qty = (int)( $p['stock_quantity'] ?? 0 );
-            if ( $st === 'outofstock' || $qty === 0 ) {
-                $out[] = [
-                    'name'  => $p['name'],
-                    'sku'   => $p['sku'] ?? '',
-                    'image' => $p['images'][0]['src'] ?? '',
-                ];
-            }
-        }
-    }
-    return $out;
-}
 
 $us_out_items = ubo_alert_out_of_stock( $us_all );
 $in_out_items = ubo_alert_out_of_stock( $in_all );
@@ -118,7 +35,7 @@ $active_store = in_array( sanitize_text_field( wp_unslash( $_GET['store'] ?? '' 
             <div>
                 <div class="ubo-v2-title">Stock Alerts &amp; Insights</div>
                 <div class="ubo-v2-subtitle">
-                    Low stock threshold: <strong>🇺🇸 <?php echo $us_threshold; ?> &nbsp;🇮🇳 <?php echo $in_threshold; ?> units</strong> —
+                    Low stock threshold: <strong>🇺🇸 <?php echo (int) $us_threshold; ?> &nbsp;🇮🇳 <?php echo (int) $in_threshold; ?> units</strong> —
                     <a href="<?php echo esc_url( admin_url('admin.php?page=ubo-settings') ); ?>" style="color:#635bff;">change in Settings</a>
                 </div>
             </div>
@@ -134,7 +51,7 @@ $active_store = in_array( sanitize_text_field( wp_unslash( $_GET['store'] ?? '' 
         <div class="ubo-alert-kpi ubo-alert-kpi-red">
             <div class="ubo-alert-kpi-icon">⛔</div>
             <div>
-                <div class="ubo-alert-kpi-val"><?php echo $total_out; ?></div>
+                <div class="ubo-alert-kpi-val"><?php echo (int) $total_out; ?></div>
                 <div class="ubo-alert-kpi-label">Out of Stock</div>
             </div>
             <div class="ubo-alert-kpi-split">
@@ -145,7 +62,7 @@ $active_store = in_array( sanitize_text_field( wp_unslash( $_GET['store'] ?? '' 
         <div class="ubo-alert-kpi ubo-alert-kpi-amber">
             <div class="ubo-alert-kpi-icon">⚠️</div>
             <div>
-                <div class="ubo-alert-kpi-val"><?php echo $total_low; ?></div>
+                <div class="ubo-alert-kpi-val"><?php echo (int) $total_low; ?></div>
                 <div class="ubo-alert-kpi-label">Low Stock</div>
             </div>
             <div class="ubo-alert-kpi-split">
@@ -156,19 +73,19 @@ $active_store = in_array( sanitize_text_field( wp_unslash( $_GET['store'] ?? '' 
         <div class="ubo-alert-kpi ubo-alert-kpi-green">
             <div class="ubo-alert-kpi-icon">✅</div>
             <div>
-                <div class="ubo-alert-kpi-val"><?php echo $total_healthy; ?></div>
+                <div class="ubo-alert-kpi-val"><?php echo (int) $total_healthy; ?></div>
                 <div class="ubo-alert-kpi-label">Healthy Stock</div>
             </div>
         </div>
         <div class="ubo-alert-kpi ubo-alert-kpi-blue">
             <div class="ubo-alert-kpi-icon">📦</div>
             <div>
-                <div class="ubo-alert-kpi-val"><?php echo $us_total + $in_total; ?></div>
+                <div class="ubo-alert-kpi-val"><?php echo (int) ($us_total + $in_total); ?></div>
                 <div class="ubo-alert-kpi-label">Total Products</div>
             </div>
             <div class="ubo-alert-kpi-split">
-                <span>🇺🇸 <?php echo $us_total; ?></span>
-                <span>🇮🇳 <?php echo $in_total; ?></span>
+                <span>🇺🇸 <?php echo (int) $us_total; ?></span>
+                <span>🇮🇳 <?php echo (int) $in_total; ?></span>
             </div>
         </div>
     </div>
@@ -178,13 +95,13 @@ $active_store = in_array( sanitize_text_field( wp_unslash( $_GET['store'] ?? '' 
         <button class="ubo-store-tab <?php echo $active_store === 'US' ? 'active' : ''; ?>" data-store="US">
             🇺🇸 US Store
             <?php $us_issues = count( $us_out_items ) + count( $us_low ); if ( $us_issues ) : ?>
-            <span class="ubo-store-tab-badge"><?php echo $us_issues; ?></span>
+            <span class="ubo-store-tab-badge"><?php echo (int) $us_issues; ?></span>
             <?php endif; ?>
         </button>
         <button class="ubo-store-tab <?php echo $active_store === 'India' ? 'active' : ''; ?>" data-store="India">
             🇮🇳 India Store
             <?php $in_issues = count( $in_out_items ) + count( $in_low ); if ( $in_issues ) : ?>
-            <span class="ubo-store-tab-badge"><?php echo $in_issues; ?></span>
+            <span class="ubo-store-tab-badge"><?php echo (int) $in_issues; ?></span>
             <?php endif; ?>
         </button>
     </div>
@@ -221,7 +138,7 @@ $active_store = in_array( sanitize_text_field( wp_unslash( $_GET['store'] ?? '' 
             </div>
 
             <div class="ubo-alert-card-wrap">
-                <div class="ubo-v2-section-title">⚠️ Low Stock <span style="font-size:11px;font-weight:400;color:#8792a2;">≤ <?php echo $us_threshold; ?></span></div>
+                <div class="ubo-v2-section-title">⚠️ Low Stock <span style="font-size:11px;font-weight:400;color:#8792a2;">≤ <?php echo (int) $us_threshold; ?></span></div>
                 <div class="ubo-v2-card ubo-alert-card ubo-alert-card-amber">
                     <div class="ubo-v2-card-header">
                         <span>Low Stock Products</span>
@@ -241,7 +158,7 @@ $active_store = in_array( sanitize_text_field( wp_unslash( $_GET['store'] ?? '' 
                                 <div class="ubo-alert-row-info">
                                     <div class="ubo-alert-row-name"><?php echo esc_html( $item['name'] ); ?></div>
                                     <?php if ( ! empty( $item['sku'] ) ) : ?><div class="ubo-alert-row-sku"><?php echo esc_html( $item['sku'] ); ?></div><?php endif; ?>
-                                    <div class="ubo-alert-stock-bar-wrap"><div class="ubo-alert-stock-bar-fill" style="width:<?php echo $pct; ?>%;background:<?php echo $bc; ?>;"></div></div>
+                                    <div class="ubo-alert-stock-bar-wrap"><div class="ubo-alert-stock-bar-fill" style="width:<?php echo (int) $pct; ?>%;background:<?php echo esc_attr( $bc ); ?>;"></div></div>
                                 </div>
                                 <span class="ubo-alert-badge" style="background:#fff7ed;color:#c2410c;"><?php echo (int)$item['qty']; ?></span>
                             </div>
@@ -289,7 +206,7 @@ $active_store = in_array( sanitize_text_field( wp_unslash( $_GET['store'] ?? '' 
             </div>
 
             <div class="ubo-alert-card-wrap">
-                <div class="ubo-v2-section-title">⚠️ Low Stock <span style="font-size:11px;font-weight:400;color:#8792a2;">≤ <?php echo $in_threshold; ?></span></div>
+                <div class="ubo-v2-section-title">⚠️ Low Stock <span style="font-size:11px;font-weight:400;color:#8792a2;">≤ <?php echo (int) $in_threshold; ?></span></div>
                 <div class="ubo-v2-card ubo-alert-card ubo-alert-card-amber">
                     <div class="ubo-v2-card-header">
                         <span>Low Stock Products</span>
@@ -309,7 +226,7 @@ $active_store = in_array( sanitize_text_field( wp_unslash( $_GET['store'] ?? '' 
                                 <div class="ubo-alert-row-info">
                                     <div class="ubo-alert-row-name"><?php echo esc_html( $item['name'] ); ?></div>
                                     <?php if ( ! empty( $item['sku'] ) ) : ?><div class="ubo-alert-row-sku"><?php echo esc_html( $item['sku'] ); ?></div><?php endif; ?>
-                                    <div class="ubo-alert-stock-bar-wrap"><div class="ubo-alert-stock-bar-fill" style="width:<?php echo $pct; ?>%;background:<?php echo $bc; ?>;"></div></div>
+                                    <div class="ubo-alert-stock-bar-wrap"><div class="ubo-alert-stock-bar-fill" style="width:<?php echo (int) $pct; ?>%;background:<?php echo esc_attr( $bc ); ?>;"></div></div>
                                 </div>
                                 <span class="ubo-alert-badge" style="background:#fff7ed;color:#c2410c;"><?php echo (int)$item['qty']; ?></span>
                             </div>
@@ -347,12 +264,12 @@ function ubo_render_insights( $ins, $prefix ) {
                 <?php else : $i = 0; foreach ( $products as $name => $qty ) : $i++;
                     $pct = round( ( $qty / $max_p ) * 100 ); ?>
                 <div class="ubo-ins-row">
-                    <span class="ubo-v2-rank-num"><?php echo $i; ?></span>
+                    <span class="ubo-v2-rank-num"><?php echo (int) $i; ?></span>
                     <div class="ubo-ins-info">
                         <div class="ubo-ins-name"><?php echo esc_html( $name ); ?></div>
-                        <div class="ubo-ins-bar-wrap"><div class="ubo-ins-bar-fill ubo-ins-bar-purple" style="width:<?php echo $pct; ?>%;"></div></div>
+                        <div class="ubo-ins-bar-wrap"><div class="ubo-ins-bar-fill ubo-ins-bar-purple" style="width:<?php echo (int) $pct; ?>%;"></div></div>
                     </div>
-                    <span class="ubo-v2-rank-badge"><?php echo $qty; ?> sold</span>
+                    <span class="ubo-v2-rank-badge"><?php echo (int) $qty; ?> sold</span>
                 </div>
                 <?php endforeach; endif; ?>
             </div>
@@ -370,9 +287,9 @@ function ubo_render_insights( $ins, $prefix ) {
                     <span class="ubo-ins-color-dot" style="background:<?php echo esc_attr( ubo_color_hex( $color ) ); ?>;"></span>
                     <div class="ubo-ins-info">
                         <div class="ubo-ins-name"><?php echo esc_html( $color ); ?></div>
-                        <div class="ubo-ins-bar-wrap"><div class="ubo-ins-bar-fill ubo-ins-bar-pink" style="width:<?php echo $pct; ?>%;"></div></div>
+                        <div class="ubo-ins-bar-wrap"><div class="ubo-ins-bar-fill ubo-ins-bar-pink" style="width:<?php echo (int) $pct; ?>%;"></div></div>
                     </div>
-                    <span class="ubo-v2-rank-badge"><?php echo $qty; ?> sold</span>
+                    <span class="ubo-v2-rank-badge"><?php echo (int) $qty; ?> sold</span>
                 </div>
                 <?php endforeach; endif; ?>
             </div>
@@ -389,10 +306,10 @@ function ubo_render_insights( $ins, $prefix ) {
                 <div class="ubo-ins-size-row">
                     <span class="ubo-ins-size-tag"><?php echo esc_html( strtoupper( $size ) ); ?></span>
                     <div class="ubo-ins-bar-wrap" style="flex:1;">
-                        <div class="ubo-ins-bar-fill ubo-ins-bar-teal" style="width:<?php echo $pct; ?>%;"></div>
+                        <div class="ubo-ins-bar-fill ubo-ins-bar-teal" style="width:<?php echo (int) $pct; ?>%;"></div>
                     </div>
-                    <span class="ubo-ins-size-pct"><?php echo $pct; ?>%</span>
-                    <span class="ubo-v2-rank-badge" style="background:#f0fdf4;color:#166534;"><?php echo $qty; ?></span>
+                    <span class="ubo-ins-size-pct"><?php echo (int) $pct; ?>%</span>
+                    <span class="ubo-v2-rank-badge" style="background:#f0fdf4;color:#166534;"><?php echo (int) $qty; ?></span>
                 </div>
                 <?php endforeach; endif; ?>
             </div>

@@ -20,13 +20,103 @@ require_once UBO_PLUGIN_DIR . 'includes/class-webhook.php';
 
 UBO_Webhook::register();
 
-// Shared thumbnail helper
+// ── Shared helpers ──
 if ( ! function_exists( 'ubo_thumb' ) ) {
     function ubo_thumb( $src, $size = 32, $alt = '' ) {
         if ( $src ) {
-            return '<img src="' . esc_url( $src ) . '" width="' . $size . '" height="' . $size . '" loading="lazy" alt="' . esc_attr( $alt ) . '" class="ubo-thumb" style="width:' . $size . 'px;height:' . $size . 'px;">';
+            return '<img src="' . esc_url( $src ) . '" width="' . (int) $size . '" height="' . (int) $size . '" loading="lazy" alt="' . esc_attr( $alt ) . '" class="ubo-thumb" style="width:' . (int) $size . 'px;height:' . (int) $size . 'px;">';
         }
         return '<span class="ubo-thumb ubo-thumb-placeholder">📦</span>';
+    }
+}
+if ( ! function_exists( 'ubo_color_hex' ) ) {
+    function ubo_color_hex( $color ) {
+        $map = [
+            'black'=>'#1a1a1a','white'=>'#f5f5f5','red'=>'#ef4444','blue'=>'#3b82f6',
+            'green'=>'#22c55e','yellow'=>'#eab308','orange'=>'#f97316','pink'=>'#ec4899',
+            'purple'=>'#a855f7','grey'=>'#9ca3af','gray'=>'#9ca3af','brown'=>'#92400e',
+            'navy'=>'#1e3a5f','maroon'=>'#7f1d1d','beige'=>'#d4b896','cream'=>'#fef9c3',
+            'teal'=>'#14b8a6','indigo'=>'#6366f1','violet'=>'#8b5cf6','gold'=>'#d97706',
+        ];
+        return $map[ strtolower( $color ) ] ?? '#635bff';
+    }
+}
+if ( ! function_exists( 'ubo_country_flag' ) ) {
+    function ubo_country_flag( $code ) {
+        $code = strtoupper( trim( $code ) );
+        if ( strlen( $code ) !== 2 ) return '🌐';
+        $flag = '';
+        foreach ( str_split( $code ) as $c ) {
+            $ord = ord( $c ) - ord( 'A' );
+            if ( $ord < 0 || $ord > 25 ) return '🌐';
+            $flag .= mb_chr( 0x1F1E6 + $ord );
+        }
+        return $flag;
+    }
+}
+if ( ! function_exists( 'ubo_alert_low_stock' ) ) {
+    function ubo_alert_low_stock( $products, $threshold ) {
+        $low = [];
+        if ( ! is_array( $products ) || isset( $products['error'] ) ) return $low;
+        foreach ( $products as $p ) {
+            if ( ( $p['type'] ?? '' ) === 'variable' && ! empty( $p['variations_data'] ) ) {
+                foreach ( $p['variations_data'] as $v ) {
+                    $qty = (int)( $v['stock_quantity'] ?? 0 );
+                    if ( $qty > 0 && $qty <= $threshold ) {
+                        $attrs = implode( ' / ', array_map( fn($a) => $a['option'], $v['attributes'] ?? [] ) );
+                        $low[] = [ 'name' => $p['name'] . ( $attrs ? ' — ' . $attrs : '' ), 'sku' => $v['sku'] ?? '', 'qty' => $qty, 'image' => ! empty( $v['image']['src'] ) ? $v['image']['src'] : ( $p['images'][0]['src'] ?? '' ) ];
+                    }
+                }
+            } else {
+                $qty = (int)( $p['stock_quantity'] ?? 0 );
+                if ( $qty > 0 && $qty <= $threshold )
+                    $low[] = [ 'name' => $p['name'], 'sku' => $p['sku'] ?? '', 'qty' => $qty, 'image' => $p['images'][0]['src'] ?? '' ];
+            }
+        }
+        usort( $low, fn( $a, $b ) => $a['qty'] - $b['qty'] );
+        return $low;
+    }
+}
+if ( ! function_exists( 'ubo_alert_out_of_stock' ) ) {
+    function ubo_alert_out_of_stock( $products ) {
+        $out = [];
+        if ( ! is_array( $products ) || isset( $products['error'] ) ) return $out;
+        foreach ( $products as $p ) {
+            if ( ( $p['type'] ?? '' ) === 'variable' && ! empty( $p['variations_data'] ) ) {
+                foreach ( $p['variations_data'] as $v ) {
+                    $qty = (int)( $v['stock_quantity'] ?? 0 );
+                    $st  = $v['stock_status'] ?? 'instock';
+                    if ( $st === 'outofstock' || $qty === 0 ) {
+                        $attrs = implode( ' / ', array_map( fn($a) => $a['option'], $v['attributes'] ?? [] ) );
+                        $out[] = [ 'name' => $p['name'] . ( $attrs ? ' — ' . $attrs : '' ), 'sku' => $v['sku'] ?? '', 'image' => ! empty( $v['image']['src'] ) ? $v['image']['src'] : ( $p['images'][0]['src'] ?? '' ) ];
+                    }
+                }
+            } else {
+                $st  = $p['stock_status'] ?? 'instock';
+                $qty = (int)( $p['stock_quantity'] ?? 0 );
+                if ( $st === 'outofstock' || $qty === 0 )
+                    $out[] = [ 'name' => $p['name'], 'sku' => $p['sku'] ?? '', 'image' => $p['images'][0]['src'] ?? '' ];
+            }
+        }
+        return $out;
+    }
+}
+if ( ! function_exists( 'ubo_dash_count_low' ) ) {
+    function ubo_dash_count_low( $products, $threshold ) {
+        $count = 0;
+        if ( ! is_array( $products ) || isset( $products['error'] ) ) return 0;
+        foreach ( $products as $p ) {
+            if ( ( $p['type'] ?? '' ) === 'variable' && ! empty( $p['variations_data'] ) ) {
+                foreach ( $p['variations_data'] as $v ) {
+                    $qty = (int)( $v['stock_quantity'] ?? 0 );
+                    if ( ( $v['stock_status'] ?? '' ) === 'outofstock' || $qty <= $threshold ) $count++;
+                }
+            } else {
+                $qty = (int)( $p['stock_quantity'] ?? 0 );
+                if ( ( $p['stock_status'] ?? '' ) === 'outofstock' || $qty <= $threshold ) $count++;
+            }
+        }
+        return $count;
     }
 }
 
@@ -34,8 +124,8 @@ if ( ! function_exists( 'ubo_thumb' ) ) {
 add_action( 'admin_enqueue_scripts', 'ubo_enqueue_assets' );
 function ubo_enqueue_assets( $hook ) {
     if ( strpos( $hook, 'ubo' ) === false ) return;
-    wp_enqueue_style( 'ubo-admin', plugin_dir_url( __FILE__ ) . 'assets/ubo-admin.css', [], '1.9.8' );
-    wp_enqueue_script( 'ubo-admin', plugin_dir_url( __FILE__ ) . 'assets/ubo-admin.js', [ 'jquery' ], '1.9.9', true );
+    wp_enqueue_style( 'ubo-admin', plugin_dir_url( __FILE__ ) . 'assets/ubo-admin.css', [], '1.1.7' );
+    wp_enqueue_script( 'ubo-admin', plugin_dir_url( __FILE__ ) . 'assets/ubo-admin.js', [ 'jquery' ], '2.0.0', true );
     wp_localize_script( 'ubo-admin', 'uboAdmin', [
         'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
         'nonce'       => wp_create_nonce( 'ubo_ajax' ),
@@ -301,11 +391,12 @@ function ubo_ajax_refresh_cache() {
     check_ajax_referer( 'ubo_ajax', 'nonce' );
     if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error();
     foreach ( [ 'US', 'India' ] as $s ) {
-        delete_transient( 'ubo_totals_'        . $s );
-        delete_transient( 'ubo_top_sellers_'   . $s );
-        delete_transient( 'ubo_top_stocked_'   . $s );
-        delete_transient( 'ubo_insights_'      . $s );
-        delete_transient( 'ubo_wc_threshold_'  . $s );
+        delete_transient( 'ubo_totals_'       . $s );
+        delete_transient( 'ubo_top_sellers_'  . $s );
+        delete_transient( 'ubo_top_stocked_'  . $s );
+        delete_transient( 'ubo_insights_'     . $s );
+        delete_transient( 'ubo_wc_threshold_' . $s );
+        UBO_Inventory::bust_cache( $s );
     }
     wp_send_json_success( [ 'message' => 'Cache cleared. Data will reload fresh.' ] );
 }
@@ -382,6 +473,7 @@ function ubo_ajax_update_product() {
     delete_transient( 'ubo_top_sellers_' . $site );
     delete_transient( 'ubo_top_stocked_' . $site );
     delete_transient( 'ubo_insights_'    . $site );
+    UBO_Inventory::bust_cache( $site );
 
     wp_send_json_success( [ 'message' => 'Product updated successfully.' ] );
 }
