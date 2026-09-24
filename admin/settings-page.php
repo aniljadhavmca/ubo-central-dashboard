@@ -4,20 +4,15 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 if ( isset( $_POST['ubo_settings_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ubo_settings_nonce'] ) ), 'ubo_save_settings' ) ) {
     if ( current_user_can( 'manage_options' ) ) {
 
-        // API credentials form — only update if these fields are present in POST
-        $api_fields = [ 'ubo_us_url', 'ubo_us_ck', 'ubo_us_cs', 'ubo_us_webhook_secret', 'ubo_in_url', 'ubo_in_ck', 'ubo_in_cs', 'ubo_in_webhook_secret' ];
-        foreach ( $api_fields as $field ) {
-            if ( isset( $_POST[ $field ] ) ) {
-                update_option( $field, sanitize_text_field( wp_unslash( $_POST[ $field ] ) ) );
-            }
-        }
+        $form_id = sanitize_text_field( wp_unslash( $_POST['ubo_form_id'] ?? '' ) );
 
-        // Alert settings form — only update if these fields are present in POST
-        if ( isset( $_POST['ubo_low_stock_threshold'] ) ) {
-            update_option( 'ubo_low_stock_threshold', sanitize_text_field( wp_unslash( $_POST['ubo_low_stock_threshold'] ) ) );
-        }
-        // Checkbox: only meaningful when the alert form is submitted (identified by threshold being present)
-        if ( isset( $_POST['ubo_low_stock_threshold'] ) || isset( $_POST['ubo_use_wc_threshold'] ) ) {
+        if ( $form_id === 'api' ) {
+            $api_fields = [ 'ubo_us_url', 'ubo_us_ck', 'ubo_us_cs', 'ubo_us_webhook_secret', 'ubo_in_url', 'ubo_in_ck', 'ubo_in_cs', 'ubo_in_webhook_secret' ];
+            foreach ( $api_fields as $field ) {
+                update_option( $field, sanitize_text_field( wp_unslash( $_POST[ $field ] ?? '' ) ) );
+            }
+        } elseif ( $form_id === 'alerts' ) {
+            update_option( 'ubo_low_stock_threshold', sanitize_text_field( wp_unslash( $_POST['ubo_low_stock_threshold'] ?? '10' ) ) );
             update_option( 'ubo_use_wc_threshold', isset( $_POST['ubo_use_wc_threshold'] ) ? '1' : '' );
         }
 
@@ -32,6 +27,7 @@ $thresh  = (int)  get_option( 'ubo_low_stock_threshold', 10 );
     <h1>UBO Dashboard Settings</h1>
     <form method="post">
         <?php wp_nonce_field( 'ubo_save_settings', 'ubo_settings_nonce' ); ?>
+        <input type="hidden" name="ubo_form_id" value="api" />
 
         <h2>US Site — us.unitedbyom.com</h2>
         <table class="form-table">
@@ -55,6 +51,7 @@ $thresh  = (int)  get_option( 'ubo_low_stock_threshold', 10 );
     <h2>Alert Settings</h2>
     <form method="post">
         <?php wp_nonce_field( 'ubo_save_settings', 'ubo_settings_nonce' ); ?>
+        <input type="hidden" name="ubo_form_id" value="alerts" />
         <table class="form-table">
             <tr>
                 <th>Low Stock Threshold Source</th>
