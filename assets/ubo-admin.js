@@ -209,12 +209,16 @@
 
     /* ── Inventory: expand/collapse variations ── */
     function initInventoryExpand() {
-        $(document).on('click', '.ubo-expand-btn', function() {
+        // Clicking the ▶ button OR anywhere on the parent row toggles variations
+        $(document).on('click', '.ubo-inv-parent-row', function(e) {
+            // Don't trigger if clicking the Edit button or other interactive elements
+            if ( $(e.target).closest('.ubo-edit-btn, a, input, select, button:not(.ubo-expand-btn)').length ) return;
             var pid  = $(this).data('pid');
             var $row = $('#ubo-vars-' + pid);
+            var $btn = $(this).find('.ubo-expand-btn');
             var open = $row.is(':visible');
             $row.toggle( ! open );
-            $(this).text( open ? '▶' : '▼' );
+            $btn.text( open ? '▶' : '▼' );
         });
     }
 

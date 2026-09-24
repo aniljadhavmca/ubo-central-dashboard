@@ -217,8 +217,9 @@
     vertical-align: middle;
 }
 .ubo-table tbody tr:last-child td { border-bottom: none; }
-.ubo-table tbody tr:hover td { background: #f5f3ff; }
-.ubo-table tbody tr.ubo-inv-parent-row:hover td { background: #ede9fe; }
+.ubo-table tbody tr:hover td { background: #f8fafc; }
+.ubo-table tbody tr.ubo-inv-parent-row { cursor: pointer; }
+.ubo-table tbody tr.ubo-inv-parent-row:hover td { background: #f1f5f9; }
 
 /* Badges */
 .ubo-badge {
@@ -546,16 +547,31 @@
     border-radius: 4px;
     transition: background .15s, color .15s;
 }
-.ubo-expand-btn:hover { background: #ede9fe; color: #7c3aed; }
+.ubo-expand-btn:hover { background: #f1f5f9; color: #475569; }
 .ubo-expand-cell { width: 32px; text-align: center; }
+
+/* Variation sub-table */
 .ubo-var-table { background: #f8fafc; }
 .ubo-var-table thead th {
     background: #f1f5f9;
     font-size: 10px;
-    padding: 7px 14px;
+    padding: 7px 14px 7px 56px;
 }
-.ubo-var-row td { background: #f8fafc; }
-.ubo-var-row:hover td { background: #ede9fe; }
+.ubo-var-row td {
+    background: #f8fafc;
+    padding-left: 56px;
+}
+.ubo-var-row td:first-child { padding-left: 16px; }
+.ubo-var-row { border-left: 3px solid transparent; }
+.ubo-var-row:hover td { background: #f1f5f9; }
+.ubo-var-row:hover { border-left-color: #7c3aed; }
+
+/* Variations container row */
+.ubo-variations-row > td {
+    padding: 0 !important;
+    border-left: 3px solid #e2e8f0;
+    margin-left: 32px;
+}
 
 /* ── Modal ── */
 .ubo-modal-overlay {
