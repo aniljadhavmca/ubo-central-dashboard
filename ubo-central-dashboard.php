@@ -301,10 +301,11 @@ function ubo_ajax_refresh_cache() {
     check_ajax_referer( 'ubo_ajax', 'nonce' );
     if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error();
     foreach ( [ 'US', 'India' ] as $s ) {
-        delete_transient( 'ubo_totals_'      . $s );
-        delete_transient( 'ubo_top_sellers_' . $s );
-        delete_transient( 'ubo_top_stocked_' . $s );
-        delete_transient( 'ubo_insights_'    . $s );
+        delete_transient( 'ubo_totals_'        . $s );
+        delete_transient( 'ubo_top_sellers_'   . $s );
+        delete_transient( 'ubo_top_stocked_'   . $s );
+        delete_transient( 'ubo_insights_'      . $s );
+        delete_transient( 'ubo_wc_threshold_'  . $s );
     }
     wp_send_json_success( [ 'message' => 'Cache cleared. Data will reload fresh.' ] );
 }
@@ -434,3 +435,27 @@ function ubo_alerts_page()       { require_once UBO_PLUGIN_DIR . 'admin/alerts-p
 function ubo_settings_page()     { require_once UBO_PLUGIN_DIR . 'admin/settings-page.php'; }
 
 // Settings are saved via custom nonce handler in settings-page.php — no register_setting() needed.
+
+// Threshold helper — returns correct threshold for a given site based on settings toggle
+if ( ! function_exists( 'ubo_get_threshold' ) ) {
+    function ubo_get_threshold( $site_key ) {
+        if ( ! get_option( 'ubo_use_wc_threshold', false ) ) {
+            return (int) get_option( 'ubo_low_stock_threshold', UBO_LOW_STOCK_THRESHOLD );
+        }
+        // Fetch WC native threshold from the store's settings API
+        $cache_key = 'ubo_wc_threshold_' . $site_key;
+        $cached    = get_transient( $cache_key );
+        if ( $cached !== false ) return (int) $cached;
+
+        $sites = UBO_Orders::get_sites();
+        $s     = $sites[ $site_key ] ?? null;
+        if ( ! $s || empty( $s['url'] ) ) {
+            return (int) get_option( 'ubo_low_stock_threshold', UBO_LOW_STOCK_THRESHOLD );
+        }
+        $client = new UBO_API_Client( $s['url'], $s['ck'], $s['cs'] );
+        $result = $client->get( 'settings/products/woocommerce_notify_low_stock_amount' );
+        $value  = isset( $result['value'] ) ? (int) $result['value'] : (int) get_option( 'ubo_low_stock_threshold', UBO_LOW_STOCK_THRESHOLD );
+        set_transient( $cache_key, $value, 10 * MINUTE_IN_SECONDS );
+        return $value;
+    }
+}

@@ -53,14 +53,15 @@ if ( ! function_exists( 'ubo_alert_low_stock' ) ) {
 }
 
 // ── Data ──
-$threshold    = (int) get_option( 'ubo_low_stock_threshold', UBO_LOW_STOCK_THRESHOLD );
+$us_threshold = ubo_get_threshold( 'US' );
+$in_threshold = ubo_get_threshold( 'India' );
 $us_all       = UBO_Inventory::fetch( 'US',    [ 'per_page' => 100 ] );
 $in_all       = UBO_Inventory::fetch( 'India', [ 'per_page' => 100 ] );
 $us_insights  = UBO_Orders::get_insights( 'US',    8 );
 $in_insights  = UBO_Orders::get_insights( 'India', 8 );
 
-$us_low       = ubo_alert_low_stock( $us_all, $threshold );
-$in_low       = ubo_alert_low_stock( $in_all, $threshold );
+$us_low       = ubo_alert_low_stock( $us_all, $us_threshold );
+$in_low       = ubo_alert_low_stock( $in_all, $in_threshold );
 
 // Build out-of-stock lists counting individual variations, not just parent products
 function ubo_alert_out_of_stock( $products ) {
@@ -117,7 +118,7 @@ $active_store = in_array( sanitize_text_field( wp_unslash( $_GET['store'] ?? '' 
             <div>
                 <div class="ubo-v2-title">Stock Alerts &amp; Insights</div>
                 <div class="ubo-v2-subtitle">
-                    Low stock threshold: <strong><?php echo $threshold; ?> units</strong> —
+                    Low stock threshold: <strong>🇺🇸 <?php echo $us_threshold; ?> &nbsp;🇮🇳 <?php echo $in_threshold; ?> units</strong> —
                     <a href="<?php echo esc_url( admin_url('admin.php?page=ubo-settings') ); ?>" style="color:#635bff;">change in Settings</a>
                 </div>
             </div>
@@ -220,11 +221,7 @@ $active_store = in_array( sanitize_text_field( wp_unslash( $_GET['store'] ?? '' 
             </div>
 
             <div class="ubo-alert-card-wrap">
-                <div class="ubo-v2-section-title">⚠️ Low Stock <span style="font-size:11px;font-weight:400;color:#8792a2;">≤ <?php echo $threshold; ?></span></div>
-                <div class="ubo-v2-card ubo-alert-card ubo-alert-card-amber">
-                    <div class="ubo-v2-card-header">
-                        <span>Low Stock Products</span>
-                        <span class="ubo-alert-badge ubo-alert-badge-amber"><?php echo count( $us_low ); ?> items</span>
+                <div class="ubo-v2-section-title">⚠️ Low Stock <span style="font-size:11px;font-weight:400;color:#8792a2;">≤ <?php echo $us_threshold; ?></span></div>
                     </div>
                     <?php if ( empty( $us_low ) ) : ?>
                         <div class="ubo-v2-empty"><span>✅</span>None low</div>
@@ -288,11 +285,7 @@ $active_store = in_array( sanitize_text_field( wp_unslash( $_GET['store'] ?? '' 
             </div>
 
             <div class="ubo-alert-card-wrap">
-                <div class="ubo-v2-section-title">⚠️ Low Stock <span style="font-size:11px;font-weight:400;color:#8792a2;">≤ <?php echo $threshold; ?></span></div>
-                <div class="ubo-v2-card ubo-alert-card ubo-alert-card-amber">
-                    <div class="ubo-v2-card-header">
-                        <span>Low Stock Products</span>
-                        <span class="ubo-alert-badge ubo-alert-badge-amber"><?php echo count( $in_low ); ?> items</span>
+                <div class="ubo-v2-section-title">⚠️ Low Stock <span style="font-size:11px;font-weight:400;color:#8792a2;">≤ <?php echo $in_threshold; ?></span></div>
                     </div>
                     <?php if ( empty( $in_low ) ) : ?>
                         <div class="ubo-v2-empty"><span>✅</span>None low</div>

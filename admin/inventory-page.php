@@ -15,9 +15,8 @@ $has_error   = isset( $products['error'] );
 $has_filters = $stock_filter || $search;
 
 // Threshold: use WC native if enabled, else plugin setting
-$use_wc_threshold = (bool) get_option( 'ubo_use_wc_threshold', false );
-$threshold        = (int) get_option( 'ubo_low_stock_threshold', UBO_LOW_STOCK_THRESHOLD );
-$currency_symbol  = $site_filter === 'India' ? '₹' : '$';
+$threshold       = ubo_get_threshold( $site_filter );
+$currency_symbol = $site_filter === 'India' ? '₹' : '$';
 
 // Build set of SKUs that have been manually adjusted for this site
 $adjusted_skus = [];
