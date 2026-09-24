@@ -15,6 +15,9 @@ class UBO_API_Client {
     }
 
     public function get( $endpoint, $params = [] ) {
+        if ( strpos( $this->base_url, 'https://' ) !== 0 ) {
+            return [ 'error' => 'API URL must use HTTPS.' ];
+        }
         $params['per_page'] = $params['per_page'] ?? 100;
         $url = $this->base_url . $endpoint . '?' . http_build_query( $params );
 
@@ -36,5 +39,20 @@ class UBO_API_Client {
 
     public function get_total_count() {
         return $this->last_total_count;
+    }
+
+    public function put( $endpoint, $data = [] ) {
+        $url = $this->base_url . $endpoint;
+        $response = wp_remote_request( $url, [
+            'method'  => 'PUT',
+            'headers' => [
+                'Authorization' => 'Basic ' . base64_encode( $this->ck . ':' . $this->cs ),
+                'Content-Type'  => 'application/json',
+            ],
+            'body'    => wp_json_encode( $data ),
+            'timeout' => 30,
+        ] );
+        if ( is_wp_error( $response ) ) return [ 'error' => $response->get_error_message() ];
+        return json_decode( wp_remote_retrieve_body( $response ), true ) ?? [];
     }
 }
