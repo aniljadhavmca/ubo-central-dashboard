@@ -3,12 +3,24 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 if ( isset( $_POST['ubo_settings_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ubo_settings_nonce'] ) ), 'ubo_save_settings' ) ) {
     if ( current_user_can( 'manage_options' ) ) {
-        $fields = [ 'ubo_us_url', 'ubo_us_ck', 'ubo_us_cs', 'ubo_us_webhook_secret', 'ubo_in_url', 'ubo_in_ck', 'ubo_in_cs', 'ubo_in_webhook_secret', 'ubo_low_stock_threshold' ];
-        foreach ( $fields as $field ) {
-            update_option( $field, sanitize_text_field( wp_unslash( $_POST[ $field ] ?? '' ) ) );
+
+        // API credentials form — only update if these fields are present in POST
+        $api_fields = [ 'ubo_us_url', 'ubo_us_ck', 'ubo_us_cs', 'ubo_us_webhook_secret', 'ubo_in_url', 'ubo_in_ck', 'ubo_in_cs', 'ubo_in_webhook_secret' ];
+        foreach ( $api_fields as $field ) {
+            if ( isset( $_POST[ $field ] ) ) {
+                update_option( $field, sanitize_text_field( wp_unslash( $_POST[ $field ] ) ) );
+            }
         }
-        // WC native threshold toggle
-        update_option( 'ubo_use_wc_threshold', isset( $_POST['ubo_use_wc_threshold'] ) ? '1' : '' );
+
+        // Alert settings form — only update if these fields are present in POST
+        if ( isset( $_POST['ubo_low_stock_threshold'] ) ) {
+            update_option( 'ubo_low_stock_threshold', sanitize_text_field( wp_unslash( $_POST['ubo_low_stock_threshold'] ) ) );
+        }
+        // Checkbox: only meaningful when the alert form is submitted (identified by threshold being present)
+        if ( isset( $_POST['ubo_low_stock_threshold'] ) || isset( $_POST['ubo_use_wc_threshold'] ) ) {
+            update_option( 'ubo_use_wc_threshold', isset( $_POST['ubo_use_wc_threshold'] ) ? '1' : '' );
+        }
+
         echo '<div class="notice notice-success"><p>Settings saved.</p></div>';
     }
 }
