@@ -222,13 +222,17 @@ $active_store = in_array( sanitize_text_field( wp_unslash( $_GET['store'] ?? '' 
 
             <div class="ubo-alert-card-wrap">
                 <div class="ubo-v2-section-title">⚠️ Low Stock <span style="font-size:11px;font-weight:400;color:#8792a2;">≤ <?php echo $us_threshold; ?></span></div>
+                <div class="ubo-v2-card ubo-alert-card ubo-alert-card-amber">
+                    <div class="ubo-v2-card-header">
+                        <span>Low Stock Products</span>
+                        <span class="ubo-alert-badge ubo-alert-badge-amber"><?php echo count( $us_low ); ?> items</span>
                     </div>
                     <?php if ( empty( $us_low ) ) : ?>
                         <div class="ubo-v2-empty"><span>✅</span>None low</div>
                     <?php else : ?>
                         <div class="ubo-alert-list">
                             <?php foreach ( $us_low as $item ) :
-                                $pct = $threshold > 0 ? round( ( $item['qty'] / $threshold ) * 100 ) : 0;
+                                $pct = $us_threshold > 0 ? round( ( $item['qty'] / $us_threshold ) * 100 ) : 0;
                                 $bc  = $item['qty'] <= 2 ? '#ef4444' : ( $item['qty'] <= 5 ? '#f97316' : '#f59e0b' );
                             ?>
                             <div class="ubo-alert-row">
@@ -286,13 +290,17 @@ $active_store = in_array( sanitize_text_field( wp_unslash( $_GET['store'] ?? '' 
 
             <div class="ubo-alert-card-wrap">
                 <div class="ubo-v2-section-title">⚠️ Low Stock <span style="font-size:11px;font-weight:400;color:#8792a2;">≤ <?php echo $in_threshold; ?></span></div>
+                <div class="ubo-v2-card ubo-alert-card ubo-alert-card-amber">
+                    <div class="ubo-v2-card-header">
+                        <span>Low Stock Products</span>
+                        <span class="ubo-alert-badge ubo-alert-badge-amber"><?php echo count( $in_low ); ?> items</span>
                     </div>
                     <?php if ( empty( $in_low ) ) : ?>
                         <div class="ubo-v2-empty"><span>✅</span>None low</div>
                     <?php else : ?>
                         <div class="ubo-alert-list">
                             <?php foreach ( $in_low as $item ) :
-                                $pct = $threshold > 0 ? round( ( $item['qty'] / $threshold ) * 100 ) : 0;
+                                $pct = $in_threshold > 0 ? round( ( $item['qty'] / $in_threshold ) * 100 ) : 0;
                                 $bc  = $item['qty'] <= 2 ? '#ef4444' : ( $item['qty'] <= 5 ? '#f97316' : '#f59e0b' );
                             ?>
                             <div class="ubo-alert-row">

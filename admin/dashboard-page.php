@@ -9,6 +9,34 @@ $india_sellers = UBO_Orders::get_top_sellers( 'India', 5 );
 $us_stocked    = UBO_Orders::get_top_stocked( 'US',    5 );
 $india_stocked = UBO_Orders::get_top_stocked( 'India', 5 );
 
+// Threshold-aware low/out-of-stock counts
+$us_threshold = ubo_get_threshold( 'US' );
+$in_threshold = ubo_get_threshold( 'India' );
+$us_inv       = UBO_Inventory::fetch( 'US',    [ 'per_page' => 100 ] );
+$in_inv       = UBO_Inventory::fetch( 'India', [ 'per_page' => 100 ] );
+
+if ( ! function_exists( 'ubo_dash_count_low' ) ) {
+    function ubo_dash_count_low( $products, $threshold ) {
+        $count = 0;
+        if ( ! is_array( $products ) || isset( $products['error'] ) ) return 0;
+        foreach ( $products as $p ) {
+            if ( ( $p['type'] ?? '' ) === 'variable' && ! empty( $p['variations_data'] ) ) {
+                foreach ( $p['variations_data'] as $v ) {
+                    $qty = (int)( $v['stock_quantity'] ?? 0 );
+                    if ( ( $v['stock_status'] ?? '' ) === 'outofstock' || $qty <= $threshold ) $count++;
+                }
+            } else {
+                $qty = (int)( $p['stock_quantity'] ?? 0 );
+                if ( ( $p['stock_status'] ?? '' ) === 'outofstock' || $qty <= $threshold ) $count++;
+            }
+        }
+        return $count;
+    }
+}
+
+$us_low_count = ubo_dash_count_low( $us_inv, $us_threshold );
+$in_low_count = ubo_dash_count_low( $in_inv, $in_threshold );
+
 $time = current_time( 'D, M j Y · g:i A' );
 ?>
 <div class="ubo-v2-wrap">
@@ -72,11 +100,11 @@ $time = current_time( 'D, M j Y · g:i A' );
         <div class="ubo-v2-kpi ubo-v2-kpi-alert">
             <div class="ubo-v2-kpi-icon" style="background:#fef2f2;color:#ef4444;">⚠️</div>
             <div class="ubo-v2-kpi-body">
-                <div class="ubo-v2-kpi-label">Out of Stock</div>
-                <div class="ubo-v2-kpi-value" style="color:#ef4444;"><?php echo esc_html( (int)$us['low_stock'] + (int)$india['low_stock'] ); ?></div>
+                <div class="ubo-v2-kpi-label">Low / Out of Stock</div>
+                <div class="ubo-v2-kpi-value" style="color:#ef4444;"><?php echo $us_low_count + $in_low_count; ?></div>
                 <div class="ubo-v2-kpi-split">
-                    <span class="ubo-v2-flag-val">🇺🇸 <?php echo esc_html( $us['low_stock'] ); ?></span>
-                    <span class="ubo-v2-flag-val">🇮🇳 <?php echo esc_html( $india['low_stock'] ); ?></span>
+                    <span class="ubo-v2-flag-val">🇺🇸 <?php echo $us_low_count; ?> &le;<?php echo $us_threshold; ?></span>
+                    <span class="ubo-v2-flag-val">🇮🇳 <?php echo $in_low_count; ?> &le;<?php echo $in_threshold; ?></span>
                 </div>
             </div>
         </div>
