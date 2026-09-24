@@ -561,7 +561,7 @@
 
 /* Each variation row */
 .ubo-var-row td { background: #f8fafc; }
-.ubo-var-row td:first-child { padding-left: 60px; }  /* indent image to align under product name */
+.ubo-var-row td:first-child { padding-left: 78px; }  /* indent image to align under product name */
 .ubo-var-row:hover td { background: #f0f0f8; cursor: pointer; }
 
 /* Variations container — clean top separator, no side border */
