@@ -17,6 +17,7 @@ $has_filters = $stock_filter || $search;
 // Threshold: use WC native if enabled, else plugin setting
 $use_wc_threshold = (bool) get_option( 'ubo_use_wc_threshold', false );
 $threshold        = (int) get_option( 'ubo_low_stock_threshold', UBO_LOW_STOCK_THRESHOLD );
+$currency_symbol  = $site_filter === 'India' ? '₹' : '$';
 
 // Build set of SKUs that have been manually adjusted for this site
 $adjusted_skus = [];
@@ -186,8 +187,8 @@ if ( ! function_exists( 'ubo_var_summary' ) ) {
                         </td>
                         <td><span class="ubo-sku-code"><?php echo esc_html( $product['sku'] ?: '—' ); ?></span></td>
                         <td><span class="ubo-type-tag ubo-type-<?php echo esc_attr( $product['type'] ); ?>"><?php echo esc_html( $product['type'] ); ?></span></td>
-                        <td class="ubo-price-cell"><?php echo $product['price'] ? '<span class="ubo-price">$' . esc_html( $product['price'] ) . '</span>' : '—'; ?></td>
-                        <td class="ubo-price-cell"><?php echo $product['sale_price'] ? '<span class="ubo-sale-price">$' . esc_html( $product['sale_price'] ) . '</span>' : '—'; ?></td>
+                        <td class="ubo-price-cell"><?php echo $product['price'] ? '<span class="ubo-price">' . $currency_symbol . esc_html( $product['price'] ) . '</span>' : '—'; ?></td>
+                        <td class="ubo-price-cell"><?php echo $product['sale_price'] ? '<span class="ubo-sale-price">' . $currency_symbol . esc_html( $product['sale_price'] ) . '</span>' : '—'; ?></td>
                         <td>
                             <?php if ( $has_vars ) : ?>
                                 <span class="ubo-badge ubo-badge-var">variable</span>
@@ -257,8 +258,8 @@ if ( ! function_exists( 'ubo_var_summary' ) ) {
                                                 </div>
                                             </td>
                                             <td><span class="ubo-sku-code"><?php echo esc_html( $v['sku'] ?: '—' ); ?></span></td>
-                                            <td class="ubo-price-cell"><?php echo $v['price'] ? '<span class="ubo-price">$' . esc_html( $v['price'] ) . '</span>' : '—'; ?></td>
-                                            <td class="ubo-price-cell"><?php echo $v['sale_price'] ? '<span class="ubo-sale-price">$' . esc_html( $v['sale_price'] ) . '</span>' : '—'; ?></td>
+                                            <td class="ubo-price-cell"><?php echo $v['price'] ? '<span class="ubo-price">' . $currency_symbol . esc_html( $v['price'] ) . '</span>' : '—'; ?></td>
+                                            <td class="ubo-price-cell"><?php echo $v['sale_price'] ? '<span class="ubo-sale-price">' . $currency_symbol . esc_html( $v['sale_price'] ) . '</span>' : '—'; ?></td>
                                             <td><?php echo ubo_inv_badge( $v['stock_status'] ?? 'instock' ); ?></td>
                                             <td class="<?php echo esc_attr( $vqty_cls ); ?>"><?php echo is_null( $vqty ) ? '—' : (int) $vqty; ?></td>
                                             <td>
@@ -311,11 +312,11 @@ if ( ! function_exists( 'ubo_var_summary' ) ) {
 
             <div class="ubo-modal-fields">
                 <div class="ubo-field">
-                    <label>Regular Price ($)</label>
+                    <label>Regular Price (<?php echo esc_html( $currency_symbol ); ?>)</label>
                     <input type="number" id="ubo-edit-price" step="0.01" min="0" placeholder="e.g. 29.99" />
                 </div>
                 <div class="ubo-field">
-                    <label>Sale Price ($) <span style="color:#94a3b8;font-weight:400;">(optional)</span></label>
+                    <label>Sale Price (<?php echo esc_html( $currency_symbol ); ?>) <span style="color:#94a3b8;font-weight:400;">(optional)</span></label>
                     <input type="number" id="ubo-edit-sale" step="0.01" min="0" placeholder="Leave blank to remove sale" />
                 </div>
                 <div class="ubo-field">

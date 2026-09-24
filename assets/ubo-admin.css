@@ -217,7 +217,8 @@
     vertical-align: middle;
 }
 .ubo-table tbody tr:last-child td { border-bottom: none; }
-.ubo-table tbody tr:hover td { background: #fafbff; }
+.ubo-table tbody tr:hover td { background: #f5f3ff; }
+.ubo-table tbody tr.ubo-inv-parent-row:hover td { background: #ede9fe; }
 
 /* Badges */
 .ubo-badge {
@@ -545,7 +546,7 @@
     border-radius: 4px;
     transition: background .15s, color .15s;
 }
-.ubo-expand-btn:hover { background: #f1f5f9; color: #475569; }
+.ubo-expand-btn:hover { background: #ede9fe; color: #7c3aed; }
 .ubo-expand-cell { width: 32px; text-align: center; }
 .ubo-var-table { background: #f8fafc; }
 .ubo-var-table thead th {
@@ -554,7 +555,7 @@
     padding: 7px 14px;
 }
 .ubo-var-row td { background: #f8fafc; }
-.ubo-var-row:hover td { background: #f1f5f9; }
+.ubo-var-row:hover td { background: #ede9fe; }
 
 /* ── Modal ── */
 .ubo-modal-overlay {
