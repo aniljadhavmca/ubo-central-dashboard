@@ -555,22 +555,20 @@
 .ubo-var-table thead th {
     background: #f1f5f9;
     font-size: 10px;
-    padding: 7px 14px 7px 56px;
+    padding: 7px 14px;
 }
-.ubo-var-row td {
-    background: #f8fafc;
-    padding-left: 56px;
-}
-.ubo-var-row td:first-child { padding-left: 16px; }
-.ubo-var-row { border-left: 3px solid transparent; }
-.ubo-var-row:hover td { background: #f1f5f9; }
-.ubo-var-row:hover { border-left-color: #7c3aed; }
+.ubo-var-table thead th:first-child { padding-left: 60px; }
 
-/* Variations container row */
+/* Each variation row */
+.ubo-var-row td { background: #f8fafc; }
+.ubo-var-row td:first-child { padding-left: 60px; }  /* indent image to align under product name */
+.ubo-var-row:hover td { background: #f0f0f8; cursor: pointer; }
+
+/* Variations container — clean top separator, no side border */
 .ubo-variations-row > td {
     padding: 0 !important;
-    border-left: 3px solid #e2e8f0;
-    margin-left: 32px;
+    border-top: 2px solid #ede9fe;
+    border-left: none;
 }
 
 /* ── Modal ── */

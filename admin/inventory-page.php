@@ -244,7 +244,7 @@ if ( ! function_exists( 'ubo_var_summary' ) ) {
                                         $v_adj    = ! empty( $v['sku'] ) && isset( $adjusted_skus[ $v['sku'] ] );
                                     ?>
                                         <tr class="ubo-var-row">
-                                            <td style="padding-left:16px;">
+                                            <td>
                                                 <?php echo ubo_thumb( $v_img, 28, $attrs ); ?>
                                             </td>
                                             <td>
