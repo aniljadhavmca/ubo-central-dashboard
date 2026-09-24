@@ -7,9 +7,14 @@ if ( isset( $_POST['ubo_settings_nonce'] ) && wp_verify_nonce( sanitize_text_fie
         foreach ( $fields as $field ) {
             update_option( $field, sanitize_text_field( wp_unslash( $_POST[ $field ] ?? '' ) ) );
         }
+        // WC native threshold toggle
+        update_option( 'ubo_use_wc_threshold', isset( $_POST['ubo_use_wc_threshold'] ) ? '1' : '' );
         echo '<div class="notice notice-success"><p>Settings saved.</p></div>';
     }
 }
+
+$use_wc  = (bool) get_option( 'ubo_use_wc_threshold', false );
+$thresh  = (int)  get_option( 'ubo_low_stock_threshold', 10 );
 ?>
 <div class="wrap">
     <h1>UBO Dashboard Settings</h1>
@@ -40,13 +45,54 @@ if ( isset( $_POST['ubo_settings_nonce'] ) && wp_verify_nonce( sanitize_text_fie
         <?php wp_nonce_field( 'ubo_save_settings', 'ubo_settings_nonce' ); ?>
         <table class="form-table">
             <tr>
-                <th>Low Stock Threshold</th>
+                <th>Low Stock Threshold Source</th>
                 <td>
-                    <input class="small-text" type="number" name="ubo_low_stock_threshold" value="<?php echo esc_attr( get_option('ubo_low_stock_threshold', 10) ); ?>" min="1" />
+                    <fieldset>
+                        <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                            <input type="checkbox" name="ubo_use_wc_threshold" value="1" <?php checked( $use_wc ); ?> id="ubo-wc-thresh-toggle" />
+                            <strong>Use WooCommerce store threshold</strong>
+                        </label>
+                        <p class="description" style="margin-bottom:12px;">
+                            When enabled, the plugin reads the low stock threshold directly from each WooCommerce store's settings
+                            (<em>WooCommerce → Settings → Products → Inventory → Low stock threshold</em>).
+                            The plugin threshold field below is ignored.
+                        </p>
+                        <?php if ( $use_wc ) : ?>
+                            <p class="description" style="color:#059669;font-weight:500;">
+                                ✅ Currently using WooCommerce native threshold.
+                                <a href="#" id="ubo-disable-wc-thresh" style="color:#dc2626;margin-left:8px;">Disable &amp; use plugin threshold instead</a>
+                            </p>
+                        <?php endif; ?>
+                    </fieldset>
+                </td>
+            </tr>
+            <tr id="ubo-plugin-thresh-row" <?php echo $use_wc ? 'style="opacity:.45;pointer-events:none;"' : ''; ?>>
+                <th>Plugin Low Stock Threshold</th>
+                <td>
+                    <input class="small-text" type="number" name="ubo_low_stock_threshold"
+                        value="<?php echo esc_attr( $thresh ); ?>" min="1" <?php echo $use_wc ? 'disabled' : ''; ?> />
+                    <span style="margin-left:8px;color:#64748b;font-size:13px;">units</span>
                     <p class="description">Products at or below this quantity will appear in the Alerts panel.</p>
                 </td>
             </tr>
         </table>
-        <?php submit_button( 'Save Settings' ); ?>
+        <?php submit_button( 'Save Alert Settings' ); ?>
     </form>
 </div>
+
+<script>
+(function($) {
+    // Toggle plugin threshold row based on WC checkbox
+    $('#ubo-wc-thresh-toggle').on('change', function() {
+        var disabled = $(this).is(':checked');
+        $('#ubo-plugin-thresh-row').css({ opacity: disabled ? .45 : 1, 'pointer-events': disabled ? 'none' : '' });
+        $('#ubo-plugin-thresh-row input').prop('disabled', disabled);
+    });
+    // Disable WC threshold link
+    $('#ubo-disable-wc-thresh').on('click', function(e) {
+        e.preventDefault();
+        $('#ubo-wc-thresh-toggle').prop('checked', false).trigger('change');
+        $(this).closest('p').hide();
+    });
+})(jQuery);
+</script>

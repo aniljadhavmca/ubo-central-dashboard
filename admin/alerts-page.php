@@ -54,8 +54,6 @@ if ( ! function_exists( 'ubo_alert_low_stock' ) ) {
 
 // ── Data ──
 $threshold    = (int) get_option( 'ubo_low_stock_threshold', UBO_LOW_STOCK_THRESHOLD );
-$us_out       = UBO_Inventory::fetch( 'US',    [ 'stock_status' => 'outofstock', 'per_page' => 100 ] );
-$in_out       = UBO_Inventory::fetch( 'India', [ 'stock_status' => 'outofstock', 'per_page' => 100 ] );
 $us_all       = UBO_Inventory::fetch( 'US',    [ 'per_page' => 100 ] );
 $in_all       = UBO_Inventory::fetch( 'India', [ 'per_page' => 100 ] );
 $us_insights  = UBO_Orders::get_insights( 'US',    8 );
@@ -63,8 +61,42 @@ $in_insights  = UBO_Orders::get_insights( 'India', 8 );
 
 $us_low       = ubo_alert_low_stock( $us_all, $threshold );
 $in_low       = ubo_alert_low_stock( $in_all, $threshold );
-$us_out_items = is_array( $us_out ) && ! isset( $us_out['error'] ) ? $us_out : [];
-$in_out_items = is_array( $in_out ) && ! isset( $in_out['error'] ) ? $in_out : [];
+
+// Build out-of-stock lists counting individual variations, not just parent products
+function ubo_alert_out_of_stock( $products ) {
+    $out = [];
+    if ( ! is_array( $products ) || isset( $products['error'] ) ) return $out;
+    foreach ( $products as $p ) {
+        if ( ( $p['type'] ?? '' ) === 'variable' && ! empty( $p['variations_data'] ) ) {
+            foreach ( $p['variations_data'] as $v ) {
+                $qty = (int)( $v['stock_quantity'] ?? 0 );
+                $st  = $v['stock_status'] ?? 'instock';
+                if ( $st === 'outofstock' || $qty === 0 ) {
+                    $attrs = implode( ' / ', array_map( fn($a) => $a['option'], $v['attributes'] ?? [] ) );
+                    $out[] = [
+                        'name'  => $p['name'] . ( $attrs ? ' — ' . $attrs : '' ),
+                        'sku'   => $v['sku'] ?? '',
+                        'image' => ! empty( $v['image']['src'] ) ? $v['image']['src'] : ( $p['images'][0]['src'] ?? '' ),
+                    ];
+                }
+            }
+        } else {
+            $st  = $p['stock_status'] ?? 'instock';
+            $qty = (int)( $p['stock_quantity'] ?? 0 );
+            if ( $st === 'outofstock' || $qty === 0 ) {
+                $out[] = [
+                    'name'  => $p['name'],
+                    'sku'   => $p['sku'] ?? '',
+                    'image' => $p['images'][0]['src'] ?? '',
+                ];
+            }
+        }
+    }
+    return $out;
+}
+
+$us_out_items = ubo_alert_out_of_stock( $us_all );
+$in_out_items = ubo_alert_out_of_stock( $in_all );
 $us_total     = is_array( $us_all ) && ! isset( $us_all['error'] ) ? count( $us_all ) : 0;
 $in_total     = is_array( $in_all ) && ! isset( $in_all['error'] ) ? count( $in_all ) : 0;
 $total_out    = count( $us_out_items ) + count( $in_out_items );
@@ -174,7 +206,7 @@ $active_store = in_array( sanitize_text_field( wp_unslash( $_GET['store'] ?? '' 
                             <?php foreach ( $us_out_items as $p ) : ?>
                             <div class="ubo-alert-row">
                                 <div class="ubo-alert-severity ubo-alert-severity-red"></div>
-                                <?php echo ubo_thumb( $p['images'][0]['src'] ?? '', 28, $p['name'] ); ?>
+                                <?php echo ubo_thumb( $p['image'] ?? '', 28, $p['name'] ); ?>
                                 <div class="ubo-alert-row-info">
                                     <div class="ubo-alert-row-name"><?php echo esc_html( $p['name'] ); ?></div>
                                     <?php if ( ! empty( $p['sku'] ) ) : ?><div class="ubo-alert-row-sku"><?php echo esc_html( $p['sku'] ); ?></div><?php endif; ?>
@@ -242,7 +274,7 @@ $active_store = in_array( sanitize_text_field( wp_unslash( $_GET['store'] ?? '' 
                             <?php foreach ( $in_out_items as $p ) : ?>
                             <div class="ubo-alert-row">
                                 <div class="ubo-alert-severity ubo-alert-severity-red"></div>
-                                <?php echo ubo_thumb( $p['images'][0]['src'] ?? '', 28, $p['name'] ); ?>
+                                <?php echo ubo_thumb( $p['image'] ?? '', 28, $p['name'] ); ?>
                                 <div class="ubo-alert-row-info">
                                     <div class="ubo-alert-row-name"><?php echo esc_html( $p['name'] ); ?></div>
                                     <?php if ( ! empty( $p['sku'] ) ) : ?><div class="ubo-alert-row-sku"><?php echo esc_html( $p['sku'] ); ?></div><?php endif; ?>

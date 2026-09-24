@@ -13,9 +13,12 @@ if ( $search )       $params['search']       = $search;
 $products    = UBO_Inventory::fetch( $site_filter, $params );
 $has_error   = isset( $products['error'] );
 $has_filters = $stock_filter || $search;
-$threshold   = (int) get_option( 'ubo_low_stock_threshold', UBO_LOW_STOCK_THRESHOLD );
 
-// Build a set of SKUs that have been manually adjusted for this site
+// Threshold: use WC native if enabled, else plugin setting
+$use_wc_threshold = (bool) get_option( 'ubo_use_wc_threshold', false );
+$threshold        = (int) get_option( 'ubo_low_stock_threshold', UBO_LOW_STOCK_THRESHOLD );
+
+// Build set of SKUs that have been manually adjusted for this site
 $adjusted_skus = [];
 if ( ! $has_error && ! empty( $products ) ) {
     global $wpdb;
@@ -53,6 +56,24 @@ if ( ! function_exists( 'ubo_inv_badge' ) ) {
         ];
         $d = $map[ $status ] ?? [ ucfirst( $status ), 'ubo-badge-default' ];
         return '<span class="ubo-badge ' . esc_attr( $d[1] ) . '">' . esc_html( $d[0] ) . '</span>';
+    }
+}
+
+// Build variation summary for a variable product
+if ( ! function_exists( 'ubo_var_summary' ) ) {
+    function ubo_var_summary( $variations, $threshold ) {
+        $total = count( $variations );
+        $out   = 0; $low = 0;
+        foreach ( $variations as $v ) {
+            $qty = (int)( $v['stock_quantity'] ?? 0 );
+            $st  = $v['stock_status'] ?? 'instock';
+            if ( $st === 'outofstock' || $qty === 0 ) $out++;
+            elseif ( $qty <= $threshold )             $low++;
+        }
+        $parts = [ '<span class="ubo-var-summary-total">' . $total . ' variants</span>' ];
+        if ( $out ) $parts[] = '<span class="ubo-var-chip ubo-var-chip-out">' . $out . ' out</span>';
+        if ( $low ) $parts[] = '<span class="ubo-var-chip ubo-var-chip-low">' . $low . ' low</span>';
+        return implode( ' ', $parts );
     }
 }
 ?>
@@ -123,7 +144,7 @@ if ( ! function_exists( 'ubo_inv_badge' ) ) {
                         <th>SKU</th>
                         <th>Type</th>
                         <th>Price</th>
-                        <th>Sale Price</th>
+                        <th>Sale</th>
                         <th>Stock</th>
                         <th>Qty</th>
                         <th>Categories</th>
@@ -132,11 +153,13 @@ if ( ! function_exists( 'ubo_inv_badge' ) ) {
                 </thead>
                 <tbody>
                 <?php foreach ( $products as $product ) :
-                    $cats       = implode( ', ', array_column( $product['categories'] ?? [], 'name' ) );
-                    $has_vars   = $product['type'] === 'variable' && ! empty( $product['variations_data'] );
-                    $qty        = $product['stock_quantity'] ?? null;
-                    $qty_class  = ubo_inv_stock_class( $qty, $threshold );
-                    $pid        = (int) $product['id'];
+                    $cats      = implode( ', ', array_column( $product['categories'] ?? [], 'name' ) );
+                    $has_vars  = $product['type'] === 'variable' && ! empty( $product['variations_data'] );
+                    $qty       = $product['stock_quantity'] ?? null;
+                    $qty_class = ubo_inv_stock_class( $qty, $threshold );
+                    $pid       = (int) $product['id'];
+                    $p_img     = $product['images'][0]['src'] ?? '';
+                    $is_adj    = ! empty( $product['sku'] ) && isset( $adjusted_skus[ $product['sku'] ] );
                 ?>
                     <tr class="ubo-inv-parent-row" data-pid="<?php echo $pid; ?>">
                         <td class="ubo-expand-cell">
@@ -146,15 +169,18 @@ if ( ! function_exists( 'ubo_inv_badge' ) ) {
                         </td>
                         <td>
                             <div class="ubo-product-name-cell">
-                                <?php echo ubo_thumb( $product['images'][0]['src'] ?? '', 32, $product['name'] ); ?>
+                                <?php echo ubo_thumb( $p_img, 32, $product['name'] ); ?>
                                 <div>
                                     <div class="ubo-product-name">
                                         <?php echo esc_html( $product['name'] ); ?>
-                                        <?php if ( ! empty( $product['sku'] ) && isset( $adjusted_skus[ $product['sku'] ] ) ) : ?>
-                                            <span class="ubo-adjusted-tag">adjusted</span>
+                                        <?php if ( $is_adj ) : ?>
+                                            <span class="ubo-adj-icon" title="Stock has been manually adjusted">✎</span>
                                         <?php endif; ?>
                                     </div>
                                     <div style="font-size:11px;color:#94a3b8;">ID: <?php echo $pid; ?></div>
+                                    <?php if ( $has_vars ) : ?>
+                                        <div class="ubo-var-summary-row"><?php echo ubo_var_summary( $product['variations_data'], $threshold ); ?></div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </td>
@@ -162,8 +188,16 @@ if ( ! function_exists( 'ubo_inv_badge' ) ) {
                         <td><span class="ubo-type-tag ubo-type-<?php echo esc_attr( $product['type'] ); ?>"><?php echo esc_html( $product['type'] ); ?></span></td>
                         <td class="ubo-price-cell"><?php echo $product['price'] ? '<span class="ubo-price">$' . esc_html( $product['price'] ) . '</span>' : '—'; ?></td>
                         <td class="ubo-price-cell"><?php echo $product['sale_price'] ? '<span class="ubo-sale-price">$' . esc_html( $product['sale_price'] ) . '</span>' : '—'; ?></td>
-                        <td><?php echo ubo_inv_badge( $product['stock_status'] ?? 'instock' ); ?></td>
-                        <td class="<?php echo esc_attr( $qty_class ); ?>"><?php echo is_null( $qty ) ? '—' : (int) $qty; ?></td>
+                        <td>
+                            <?php if ( $has_vars ) : ?>
+                                <span class="ubo-badge ubo-badge-var">variable</span>
+                            <?php else : ?>
+                                <?php echo ubo_inv_badge( $product['stock_status'] ?? 'instock' ); ?>
+                            <?php endif; ?>
+                        </td>
+                        <td class="<?php echo $has_vars ? 'qty-na' : esc_attr( $qty_class ); ?>">
+                            <?php echo $has_vars ? '—' : ( is_null( $qty ) ? '—' : (int) $qty ); ?>
+                        </td>
                         <td style="font-size:12px;color:#64748b;"><?php echo esc_html( $cats ); ?></td>
                         <td>
                             <?php if ( $product['type'] !== 'variable' ) : ?>
@@ -179,7 +213,7 @@ if ( ! function_exists( 'ubo_inv_badge' ) ) {
                                     data-qty="<?php echo esc_attr( $qty ?? '' ); ?>"
                                     style="height:28px;padding:0 10px;font-size:12px;">✏️ Edit</button>
                             <?php else : ?>
-                                <span style="font-size:11px;color:#94a3b8;">↓ variations</span>
+                                <span style="font-size:11px;color:#94a3b8;">↓ expand</span>
                             <?php endif; ?>
                         </td>
                     </tr>
@@ -190,39 +224,43 @@ if ( ! function_exists( 'ubo_inv_badge' ) ) {
                                 <table class="ubo-table ubo-var-table">
                                     <thead>
                                         <tr>
-                                            <th style="width:40px;padding-left:40px;">↳</th>
+                                            <th style="width:48px;"></th>
                                             <th>Variation</th>
                                             <th>SKU</th>
-                                            <th colspan="2">Price</th>
-                                            <th>Sale Price</th>
+                                            <th>Price</th>
+                                            <th>Sale</th>
                                             <th>Stock</th>
                                             <th>Qty</th>
-                                            <th></th>
                                             <th style="width:80px;"></th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                     <?php foreach ( $product['variations_data'] as $v ) :
-                                        $attrs     = implode( ' / ', array_map( fn($a) => $a['option'], $v['attributes'] ?? [] ) );
-                                        $vqty      = $v['stock_quantity'] ?? null;
-                                        $vqty_cls  = ubo_inv_stock_class( $vqty, $threshold );
-                                        $vid       = (int) $v['id'];
+                                        $attrs    = implode( ' / ', array_map( fn($a) => $a['option'], $v['attributes'] ?? [] ) );
+                                        $vqty     = $v['stock_quantity'] ?? null;
+                                        $vqty_cls = ubo_inv_stock_class( $vqty, $threshold );
+                                        $vid      = (int) $v['id'];
+                                        $v_img    = ! empty( $v['image']['src'] ) ? $v['image']['src'] : $p_img;
+                                        $v_adj    = ! empty( $v['sku'] ) && isset( $adjusted_skus[ $v['sku'] ] );
                                     ?>
                                         <tr class="ubo-var-row">
-                                            <td style="padding-left:40px;color:#94a3b8;">↳</td>
+                                            <td style="padding-left:16px;">
+                                                <?php echo ubo_thumb( $v_img, 28, $attrs ); ?>
+                                            </td>
                                             <td>
-                                                <span style="font-size:13px;color:#334155;"><?php echo esc_html( $attrs ?: 'Default' ); ?></span>
-                                                <?php if ( ! empty( $v['sku'] ) && isset( $adjusted_skus[ $v['sku'] ] ) ) : ?>
-                                                    <span class="ubo-adjusted-tag">adjusted</span>
-                                                <?php endif; ?>
-                                                <span style="font-size:11px;color:#94a3b8;margin-left:6px;">ID: <?php echo $vid; ?></span>
+                                                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                                                    <span class="ubo-var-attrs"><?php echo esc_html( $attrs ?: 'Default' ); ?></span>
+                                                    <?php if ( $v_adj ) : ?>
+                                                        <span class="ubo-adj-icon" title="Stock has been manually adjusted">✎</span>
+                                                    <?php endif; ?>
+                                                    <span style="font-size:10px;color:#94a3b8;">ID: <?php echo $vid; ?></span>
+                                                </div>
                                             </td>
                                             <td><span class="ubo-sku-code"><?php echo esc_html( $v['sku'] ?: '—' ); ?></span></td>
-                                            <td colspan="2" class="ubo-price-cell"><?php echo $v['price'] ? '<span class="ubo-price">$' . esc_html( $v['price'] ) . '</span>' : '—'; ?></td>
+                                            <td class="ubo-price-cell"><?php echo $v['price'] ? '<span class="ubo-price">$' . esc_html( $v['price'] ) . '</span>' : '—'; ?></td>
                                             <td class="ubo-price-cell"><?php echo $v['sale_price'] ? '<span class="ubo-sale-price">$' . esc_html( $v['sale_price'] ) . '</span>' : '—'; ?></td>
                                             <td><?php echo ubo_inv_badge( $v['stock_status'] ?? 'instock' ); ?></td>
                                             <td class="<?php echo esc_attr( $vqty_cls ); ?>"><?php echo is_null( $vqty ) ? '—' : (int) $vqty; ?></td>
-                                            <td></td>
                                             <td>
                                                 <button class="ubo-btn ubo-btn-secondary ubo-edit-btn"
                                                     data-id="<?php echo $vid; ?>"

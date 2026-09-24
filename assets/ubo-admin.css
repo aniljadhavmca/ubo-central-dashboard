@@ -683,3 +683,62 @@
     align-items: center;
     gap: 10px;
 }
+
+/* ── Variation summary on parent row ── */
+.ubo-var-summary-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 3px;
+    flex-wrap: wrap;
+}
+.ubo-var-summary-total {
+    font-size: 10px;
+    color: #8792a2;
+}
+.ubo-var-chip {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+.ubo-var-chip-out { background: #fef2f2; color: #dc2626; }
+.ubo-var-chip-low { background: #fffbeb; color: #b45309; }
+
+/* ── Adjusted icon (replaces text tag) ── */
+.ubo-adj-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    font-size: 11px;
+    color: #7c3aed;
+    background: #f5f3ff;
+    border: 1px solid #ddd6fe;
+    border-radius: 3px;
+    cursor: default;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+
+/* ── Variable badge on stock column ── */
+.ubo-badge-var {
+    background: #f0f3f6;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 4px;
+}
+
+/* ── Variation row attrs ── */
+.ubo-var-attrs {
+    font-size: 12px;
+    font-weight: 500;
+    color: #334155;
+}
+
+/* ── Remove old adjusted-tag (replaced by icon) ── */
+.ubo-adjusted-tag { display: none; }
