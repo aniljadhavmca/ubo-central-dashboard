@@ -433,10 +433,4 @@ function ubo_adjustments_page()  { require_once UBO_PLUGIN_DIR . 'admin/adjustme
 function ubo_alerts_page()       { require_once UBO_PLUGIN_DIR . 'admin/alerts-page.php'; }
 function ubo_settings_page()     { require_once UBO_PLUGIN_DIR . 'admin/settings-page.php'; }
 
-add_action( 'admin_init', 'ubo_register_settings' );
-function ubo_register_settings() {
-    $fields = [ 'ubo_us_url', 'ubo_us_ck', 'ubo_us_cs', 'ubo_us_webhook_secret', 'ubo_in_url', 'ubo_in_ck', 'ubo_in_cs', 'ubo_in_webhook_secret', 'ubo_low_stock_threshold', 'ubo_use_wc_threshold' ];
-    foreach ( $fields as $field ) {
-        register_setting( 'ubo_settings_group', $field, [ 'sanitize_callback' => 'sanitize_text_field' ] );
-    }
-}
+// Settings are saved via custom nonce handler in settings-page.php — no register_setting() needed.
